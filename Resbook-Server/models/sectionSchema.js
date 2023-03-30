@@ -5,6 +5,10 @@ const imageSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  public_id: {
+    type:String,
+    required: true,
+  }
 });
 
 const timingSchema = new mongoose.Schema({
@@ -78,18 +82,26 @@ const sectionSchema = new mongoose.Schema({
     required: true,
     enum: ["Yes","No"]
   },
-  rating: {
-    type: Number,
-    required: true,
-    enum: [1,2,3,4,5],
-    default: 3,
-  },
   timing: timingSchema,
   menu: [{ type: mongoose.Schema.Types.ObjectId, ref: "MenuCategory" }],
   restaurantId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Restaurant"
-  }
+  },
+  rating:{
+    type:Number,
+    min:0,
+    max:5,
+    default:0
+  },
+  reviews:[{
+    type:mongoose.Schema.Types.ObjectId,
+    ref:'Review'
+  }],
+  ratings:[{
+    type:mongoose.Schema.Types.ObjectId,
+    ref:'Review'
+  }]
 });
 
 module.exports = mongoose.model("sectionSchema", sectionSchema, "Section");

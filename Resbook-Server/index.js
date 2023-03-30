@@ -1,34 +1,40 @@
 const express = require("express");
+const mongoose = require("mongoose")
 require("dotenv").config();
 require("./db/conn");
 const User = require("./models/userSchema");
 const { MenuCategory, MenuItem } = require("./models/menuCategorySchema");
 const Restaurant = require("./models/restaurantSchema");
 const Section = require("./models/sectionSchema");
+const Review = require("./models/ReviewSchema")
+const UserLikings = require("./models/UserLikingsSchema")
 // console.log(User);
 const cors = require("cors");
 // const bodyParser = require('body-parser');
 const app = express();
 
-// const auth=require('./routers/auth.js')
+const multer  = require('multer');
+
+// Set up storage for uploaded files
+const storage = multer.memoryStorage();
+const upload = multer({
+  limits: {
+    fieldSize: 10 * 1024 * 1024, // 10MB
+    fileSize: 50 * 1024 * 1024 // 50MB
+  }, storage: storage });
+
+const cloudinary = require("cloudinary")
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+})
 
 const port = process.env.REACT_APP_PORT;
-// console.log(process.env.REACT_APP_PORT);
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-// app.use(bodyParser.json({ limit: '10mb' }));
-// app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
-
-// below code is to prevent permission errors to access DB
-// app.use((req,res,next) => {
-//   res.setHeader("Access-Control-Allow-Origin","http://localhost:3000");
-//   res.header(
-//     "Access-Control-Allow-Headers", "Origin, X-Requested-With,  Content-Type, Accept"
-//   );
-//   next();
-// })
-// app.use('/auth',auth)
 
 app.get("/", (req, res) => {
   res.send("<h1>namaste</h1>");
@@ -149,6 +155,308 @@ const timeToDateForTimings = (timing) => {
 //   "menu": [],
 //   "reservationCharge": 25
 // }
+
+app.get("/getUser/:id",async (req,res) => {
+  try {
+    const user = await User.findById(req.params.id)
+    if(user)
+    {
+      console.log("Back-end: User found");
+      return res.status(201).json({
+        message:"User found",
+        success:true,
+        user:user
+      })
+    }
+    else
+    {
+      return res.status(404).json({
+        message:"User not found",
+        success:false
+      })
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message:"Error: retrieving user",
+      success:false,
+      error:error
+    })
+  }
+})
+
+
+app.get("/getRestaurants", async (req,res) => {
+  try {
+    const restaurants = await Restaurant.find({})
+    if(restaurants)
+    {
+      console.log("Back-end: Restaurants found");
+      return res.status(201).json({
+        message:"Restaurants found",
+        success:true,
+        restaurants:restaurants
+      })
+    }
+    else
+    {
+      return res.status(404).json({
+        message:"No restaurants found",
+        success:false
+      })
+    }
+    
+  } catch (error) {
+    return res.status(500).json({
+      message:"Error",
+      success:false,
+      error:error
+    })
+  }
+})
+
+app.get("/getSelectedRestaurants", async (req,res) => {//pass restaurant ids in req.body
+  try {
+    let ids = []
+    for (const id of req.body.ids) {
+      ids.push(new mongoose.Types.ObjectId(id))
+    }
+    console.log(ids);
+    const restaurants = await Restaurant.find({_id: {$in:ids}})
+    if(restaurants)
+    {
+      console.log("Back-end: Restaurants found");
+      return res.status(201).json({
+        message:"Restaurants found",
+        success:true,
+        restaurants:restaurants
+      })
+    }
+    else
+    {
+      return res.status(404).json({
+        message:"No restaurants found",
+        success:false
+      })
+    }
+    
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message:"Error",
+      success:false,
+      error:error
+    })
+  }
+})
+
+app.get("/getSection/:id", async(req,res) => {//return section given a section Id
+  try {
+    const sid=req.params.id
+    const section = await Section.findById(sid)
+    if(section)
+    {
+      console.log("Backend:Section found");
+      res.status(201).json({
+        message:"Section found",
+        success:true,
+        section:section
+      })
+    }
+    else
+    {
+      res.status(404).json({
+        message:"Section not found in DB",
+        success:false
+      })
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message:"Error",
+      success:false,
+      error:error
+    })
+  }
+})
+
+app.get("/:id/getSections", async(req,res) => {//return sections given a restaurant Id
+  try {
+    const restaurantId = req.params.id
+    const restaurant = await Restaurant.findById(restaurantId)
+    if(restaurant)
+    {
+      const secIds = restaurant.sections
+      const sections = []
+      for (const secId of secIds) {
+        const section = await Section.findById(secId)
+        if(section)
+        {
+          sections.push(section)
+        }
+        else{
+          console.log("Section with id:",secId,"not found in DB");
+        }
+      }
+      return res.status(201).json({
+        message:"Sections found for restaurant:"+restaurant.name,
+        success:true,
+        sections:sections
+      })
+    }
+    else
+    {
+      return res.status(404).json({
+        message:"Restaurant not found",
+        success:false
+      })
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message:"Error/exception caught in Backend",
+      success:false
+    })
+  }
+})
+
+app.get("/getRestaurant/:id", async (req,res) => {
+  try {
+    const rid=req.params.id
+    const restaurant = await Restaurant.findById(rid)
+    if(restaurant)
+    {
+      console.log("Restaurant found");
+      res.status(201).json({
+        message:"Restaurant found",
+        success:true,
+        restaurant:restaurant
+      })
+    }
+    else
+    {
+      res.status(404).json({
+        message:"Restaurant not found in DB",
+        success:false
+      })
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message:"Error",
+      success:false,
+      error:error
+    })
+  }
+})
+
+app.get("/:id/getMenuCategories", async (req,res) => {
+  try {
+    console.log(req.params.id);
+    const secId=req.params.id
+    const section = await Section.findById(secId)
+    if(section)
+    {
+      const menuCategoryIds = section.menu
+      // console.log(section);
+      const menuCategories = []
+      for(const menuCategoryId of menuCategoryIds) {
+        const category = await MenuCategory.findById(menuCategoryId)
+        if(category)
+        {
+          menuCategories.push(category)
+        }
+        else
+        {
+          console.log("category with id:",menuCategoryId," not found ");
+        }
+      }
+      return res.status(201).json({
+        message:"Found categories",
+        success:true,
+        menuCategories:menuCategories
+      })
+    }
+    else
+    {
+      return res.status(404).json({
+        message:"Section not found",
+        success:false
+      })
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message:"Error/exception caught in Backend",
+      success:false
+    })
+  }
+})
+
+app.get("/getMenuCategory/:id", async(req,res) => {
+  try {
+    const categoryId = req.params.id
+    const category = await MenuCategory.findById(categoryId)
+    if(category)
+    {
+      const itemIds = category.Items
+      const items=[]
+      for (const itemId of itemIds ) {
+        const item = await MenuItem.findById(itemId)
+        if(item)
+        {
+          items.push(item)
+        }
+        else
+        {
+          console.log("Item id:",itemId,"not found");
+        }
+      }
+      category.Items = items
+      return res.status(201).json({
+        message:"Category Found",
+        success:true,
+        menuCategory:category
+      })
+    }
+    else
+    {
+      return res.status(404).json({
+        message:"Menu Category not found",
+        success:false
+      })
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message:"Error/exception caught in Backend",
+      success:false
+    })
+  }
+})
+
+app.get("/getUserLikings/:id", async(req,res) => {
+  try {
+    const userliking = await UserLikings.findOne({userId:req.params.id})
+    if(userliking)
+    {
+      return res.status(200).json({
+        message:"User likings retrieved successfully!!",
+        success:true,
+        userlikings:userliking
+      })
+    }
+    else{
+      return res.status(404).json({
+        message:"User likings not found",
+        success:false
+      })
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message:"Error at backend",
+      success:false
+    })
+  }
+})
+
 app.post("/updateRestaurant/addSection/:id", async (req,res) => {
   try {
     // console.log("id:",req.params.id);
@@ -197,6 +505,73 @@ app.post("/updateRestaurant/addSection/:id", async (req,res) => {
     console.error(error)
     res.status(500).json({
       message:"Section addition failed",
+      success: false
+    })
+  }
+})
+
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+app.post("/updateSectionImages/:id", upload.array('secImg'), async (req,res) => {
+  try {
+    const section = await Section.findById(req.params.id)
+    if(section)
+    {
+      // console.log(Object.keys(req))
+      // console.log(Object.keys(req.body))
+      const images = req.files.map(file => file.buffer); // Retrieve image data from uploaded files
+      // console.log(images);
+      // console.log(req.files);
+      // const images = req.files.secImg
+      const secImg = []
+      // for (const image of images) {
+      //   const mycloudImage = await cloudinary.v2.uploader.upload(image,{
+      //     folder: "Resbook/MenuItemImages",
+      //   })
+      //   console.log("url:",mycloudImage)
+      //   secImg.push({
+      //     url:mycloudImage.secure_url,
+      //     public_id:mycloudImage.public_id
+      //   })
+      // }
+      for (const image of images) {
+        const tempFilePath = path.join(os.tmpdir(), `${Date.now()}-${Math.round(Math.random() * 1e9)}.jpg`);
+        
+        try {
+          fs.writeFileSync(tempFilePath, image);
+          const mycloudImage = await cloudinary.v2.uploader.upload(tempFilePath, {
+            folder: "Resbook/SectionImages",
+          });
+          // console.log("url:",mycloudImage)
+          secImg.push({
+            url:mycloudImage.secure_url,
+            public_id:mycloudImage.public_id
+          })
+        } catch (error) {
+          console.error(error);
+        } finally {
+          fs.unlinkSync(tempFilePath); // delete the temporary file
+        }
+      }
+      section.secImg = secImg
+      await section.save()
+      console.log("Backend: images successfully uploaded to section:",section.sectionName);
+      return res.status(201).json({
+        message:"Section images added successfully",
+        success: true
+      })
+    }
+    else{
+      res.status(501).json({
+        message:"Section with id: "+req.params.id+" not found in DB.",
+        success: false
+      })
+    }
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({
+      message:"Error:Images addition for section failed",
       success: false
     })
   }
@@ -297,9 +672,58 @@ app.post("/updateRestaurant/updateSection/updateMenuCategory/addMenuItem/:id", a
   }
 })
 
+app.post("/updateRestaurant/updateImage/:id", upload.single('coverImage'), async (req,res) => {
+  try {
+    // console.log("bedore file upload");
+    let restaurant = await Restaurant.findById(req.params.id)
+    if(restaurant)
+    {
+      const coverImage = req.file.buffer
+      // console.log(coverImage)
+      const tempFilePath = path.join(os.tmpdir(), `${Date.now()}-${Math.round(Math.random() * 1e9)}.jpg`);
+      try {
+        fs.writeFileSync(tempFilePath, coverImage);
+        const mycloudImage = await cloudinary.v2.uploader.upload(tempFilePath, {
+          folder: "Resbook/RestaurantImages",
+        });
+        // console.log("url:",mycloudImage)
+        restaurant.coverImage = {
+          url:mycloudImage.secure_url,
+          public_id:mycloudImage.public_id
+        }
+        await restaurant.save()
+      } catch (error) {
+        console.error(error);
+      } finally {
+        fs.unlinkSync(tempFilePath); // delete the temporary file
+      }
+      return res.status(201).json({
+        message:"Image updated successfully",
+        success:true,
+        image: restaurant.coverImage
+      })
+    }
+    else
+    {
+      res.status(404).json({
+        message:"Restaurant with id: "+req.params.id+" not found in DB.",
+        success: false
+      })
+    }
+  } catch (error) {
+    // console.error(error)
+    res.status(500).json({
+      message:"Restaurant image updation failed",
+      success: false,
+      error:error
+    })
+  }
+})
+
 app.post("/addRestaurant",async (req,res) => {
   try {
     const restaurantFrontEnd = req.body
+    // console.log(restaurantFrontEnd);
     const restaurantExist = await Restaurant.findOne({'admin.email':restaurantFrontEnd.admin.email})
     if(restaurantExist)
     {
@@ -316,7 +740,8 @@ app.post("/addRestaurant",async (req,res) => {
       location: restaurantFrontEnd.location,
       admin: admin,
       parkingAvailable: restaurantFrontEnd.parkingAvailable,
-      sections: []
+      sections: [],
+      avgCost: restaurantFrontEnd.avgCost
     });
     await restaurant.save();// save restaurant to DB
     // console.log("Restaurant:",restaurant);
@@ -328,6 +753,7 @@ app.post("/addRestaurant",async (req,res) => {
       restaurantId: restaurant._id
     })
   } catch (error) {
+    console.error(error);
     return res.status(500).json({
       message: "Restaurant addition failed",
       success: false
@@ -419,9 +845,64 @@ app.post("/addRestaurantprevious", async (req, res) => {
   }
 )
 
-
-
-
+app.post("/updateUserLikings/:id", async (req,res) => {
+  // console.log(req.body);
+  try {
+    let userliking = await UserLikings.findOne({userId:req.params.id})
+    if(userliking)
+    {
+      // console.log(userliking);
+      if(req.body.operation==="add")
+      {
+        if(userliking[req.body.favType].findIndex(fav => fav.equals(req.body.idToOperateOn))===-1)
+        {
+          userliking[req.body.favType].push(req.body.idToOperateOn)
+        }
+        else
+        {
+          res.status(201).json({
+            message:req.body.favType+" already contains!!",
+            success:true,
+            userlikings:userliking
+          })
+        }
+      }
+      else if(req.body.operation==="remove")
+      {
+        userliking[req.body.favType] = userliking[req.body.favType].filter((id) => !(id.equals(req.body.idToOperateOn)))
+      }
+      await userliking.save()
+      if(userliking)
+      {
+        return res.status(200).json({
+          message:req.body.favType+" updated successfully!!",
+          success:true,
+          userlikings:userliking
+        })
+      }
+      else
+      {
+        return res.status(500).json({
+          message:req.body.favType+" updation failed!!",
+          success:false
+        })
+      }
+    }
+    else
+    {
+      res.status(404).json({
+        message:"User not found!!",
+        success:false
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message:"Error:backend",
+      success:false
+    });
+  }
+})
 
 
 // app.post("/addRestaurant", async (req, res) => {
@@ -582,8 +1063,12 @@ app.post("/signup", async (req, res) => {
           });
           user
             .save()
-            .then((addedUser) => {
+            .then(async (addedUser) => {
               console.log("Added user Id: ", addedUser._id);
+              const userLikings = new UserLikings({
+                userId: addedUser._id
+              })
+              await userLikings.save()
               return res.status(201).json({
                 message: "user created successfully",
                 userId: addedUser._id,
@@ -603,6 +1088,45 @@ app.post("/signup", async (req, res) => {
   }
 });
 
+app.post("/updateUserLikings/addSection/:id", async (req,res) => {
+  try {
+    let userliking = await UserLikings.findOne({userId:req.params.id})
+    if(userliking)
+    {
+      // console.log(userliking);
+      userliking.favSections.push(req.body.sectionId)
+      await userliking.save()
+      if(userliking)
+      {
+        res.status(200).json({
+          message:"Section added to favorites successfully!!",
+          success:true
+        })
+      }
+      else
+      {
+        res.status(500).json({
+          message:"Section addition to favorites failed!!",
+          success:false
+        })
+      }
+    }
+    else
+    {
+      res.status(404).json({
+        message:"User not found!!",
+        success:false
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message:"Error:backend",
+      success:false
+    });
+  }
+})
+
 app.post("/login", async (req, res) => {
   console.log("backend:", req.body);
   const { email, password } = req.body;
@@ -613,30 +1137,28 @@ app.post("/login", async (req, res) => {
   }
   try {
     const userLogin = await User.findOne({ email: email });
-    if(!userLogin)
+    if(userLogin)
     {
+      bcrypt.compare(password, userLogin.password, function(err,result) {
+        if(err)
+        {
+          console.error(err)
+          return res.json({ message:"Invalid credentials/ Wrong password", success: false });
+        }
+        else if(result)
+        {
+          return res.status(200).json({ success: true, user: userLogin });
+        }
+      })
+    }
+    else
+    {
+      console.log("Backend:User not found")
       return res.status(500).json({
         message:"User doesn't exist",
         success:false
       })
     }
-    bcrypt.compare(password, userLogin.password, function(err,result) {
-      if(err)
-      {
-        console.error(err)
-        return res.json({ message:"Invalid credentials/ Wrong password", success: false });
-      }
-      else if(result)
-      {
-        return res.status(200).json({ success: true, user: userLogin });
-      }
-    })
-    // if (userLogin.password == password) {
-    //   return res.json({ success: true, user: userLogin });
-    // } else !userLogin;
-    // {
-    //   res.status(400).json({ error: "user error", success: false });
-    // }
   } catch (err) {
     console.log(err);
     res.json({ success: false });
@@ -646,6 +1168,249 @@ app.post("/login", async (req, res) => {
 app.post("/retrieve/user", async (req, res) => {
   console.log("backend called for user retrieval:", req.body);
 });
+
+const DineinBookings = require("./models/DineinBookingSchema")
+
+app.post("/bookDineinSection", async(req,res) => {
+  try {
+    const booking = req.body
+    if(booking.guests.length<1)
+    {
+      return res.status(500).json({
+        message:"No. of guests should be greater than one!!!",
+        success:false
+      })
+    }
+    if(!booking.reservationTime)//!booking.userId && !booking.sectionId)
+    {
+      return res.status(500).json({
+        message:"ReservationTime not selected",
+        success:false
+      })
+    }
+    const bookingDBEntry = new DineinBookings(booking)
+    await bookingDBEntry.save()
+    const user = await User.findById(booking.userId)
+    if(user)
+    {
+      user.bookings.push(bookingDBEntry._id)
+      await user.save()
+      const section = await Section.findById(booking.sectionId)
+      if(section)
+      {
+        const restaurant = await Restaurant.findById(section.restaurantId)
+        if(restaurant)
+        {
+          
+          return res.status(201).json({
+            message:"dinein booked successfully",
+            success:true,
+            booking:bookingDBEntry,
+            restaurant:restaurant,
+            section:section
+          })
+        }
+        else
+        {
+          return res.status(500).json({
+            message:"Restaurant not found: booking failed",
+            success:false
+          })
+        }
+      }
+      else
+      {
+        return res.status(500).json({
+          message:"Section not found: booking failed",
+          success:false
+        })
+      }
+    }
+    else
+    {
+      return res.status(500).json({
+        message:"User not found: booking failed",
+        success:false
+      })
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message:"Booking failed",
+      success:false
+    })
+  }
+})
+
+app.post("/addReview",async (req,res) => {
+  try {
+    const review = req.body
+    if(!review.rating || !review.restaurantRating)
+    {
+      return res.status(500).json({
+        message:"Section rating or Restaurant rating missing",
+        success:false
+      })
+    }
+    const reviewDbEntry = new Review(review)
+    reviewDbEntry.save()
+    .then(async (addedReview) => {
+      console.log("Backend: New review",addedReview._id,"added successfully");
+      const section = await Section.findById(review.sectionId)
+      if(section)
+      {
+        section.rating = ((section.rating*(section.reviews.length+section.ratings.length))+review.rating)/(section.reviews.length+section.ratings.length+1)
+        if(review.review)
+        {
+          // section.noOfReviews = section.noOfReviews+1
+          section.reviews.push(addedReview._id)
+          // await section.save()
+        }
+        else
+        {
+          section.ratings.push(addedReview._id)
+        }
+        await section.save()
+        const rId = section.restaurantId
+        const restaurant = await Restaurant.findById(rId)
+        if(restaurant)
+        {
+          restaurant["rating"] = (restaurant["rating"]*restaurant["noOfRatings"]+review.restaurantRating)/(restaurant["noOfRatings"]+1)
+          restaurant["noOfRatings"]=restaurant["noOfRatings"]+1
+          await restaurant.save()
+        }
+      }
+      return res.status(201).json({
+        message:"Review added succesfully",
+        success:true,
+        review:addedReview
+      })
+    })
+    .catch(err => {
+      console.error(err);
+      return res.status(500).json({
+        message:"Review addition failed",
+        success:false,
+        error:err
+      })
+    })
+  } catch (error) {
+    return res.status(500).json({
+      message:"Review addition failed",
+      success:false
+    })
+  }
+})
+
+app.get("/getBookingSummary/:id", async(req,res) => {
+  try {
+    const bookingDBEntry = await DineinBookings.findById(req.params.id)
+    if(bookingDBEntry)
+    {
+      const section = await Section.findById(bookingDBEntry.sectionId)
+      if(section)
+      {
+        const restaurant = await Restaurant.findById(section.restaurantId)
+        if(restaurant)
+        {
+          return res.status(201).json({
+            message:"Booking retrieved successfully",
+            success:true,
+            booking:bookingDBEntry,
+            restaurant:restaurant,
+            section:section
+          })
+        }
+        else
+        {
+          return res.status(500).json({
+            message:"Restaurant not found for this booking",
+            success:false
+          })
+        }
+      }
+      else
+      {
+        return res.status(500).json({
+          message:"Section not found for this booking",
+          success:false
+        })
+      }
+    }
+    else
+    {
+      return res.status(404).json({
+        message:"Booking not found in DB",
+        success:false
+      })
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message:"Booking not found: error occured",
+      success:false,
+      error:error
+    })
+  }
+})
+
+app.get("/getReviews/:id", async(req,res) => {
+  try {
+    const reviews = await Review.find({sectionId:req.params.id})//retrieve reviews using section Id
+    if(reviews.length!==0)
+    {
+      // console.log("Backend: found reviews",reviews);
+      return res.status(200).json({
+        message:"Reviews found",
+        success:true,
+        reviews:reviews
+      })
+    }
+    else
+    {
+      return res.status(500).json({
+        message:"No Reviews found",
+        success:false
+      })
+    }
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({
+      message:"Reviews retrieval failed",
+      success:false
+    })
+  }
+})
+
+app.get("/getReview/:id", async(req,res) => {
+  try {
+    let review = await Review.findById(req.params.id)
+    if(review)
+    {
+      // console.log("Backend: found review",review);
+      const user = await User.findById(review.userId)
+      review = {...review._doc, user:user.fname+" "+user.lname}
+      return res.status(200).json({
+        message:"Reviews found",
+        success:true,
+        review:review
+      })
+    }
+    else
+    {
+      return res.status(500).json({
+        message:"No Reviews found",
+        success:false
+      })
+    }
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({
+      message:"Reviews retrieval failed",
+      success:false
+    })
+  }
+})
+
 
 app.listen(port, () => {
   console.log(`server is connected to ${port}`);

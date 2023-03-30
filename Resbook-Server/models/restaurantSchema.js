@@ -45,6 +45,31 @@ const restaurantSchema = new mongoose.Schema({
     parkingAvailable: {
         type:String,
         enum:['Yes','No']
+    },
+    rating:{
+        type:Number,
+        min:0,
+        max:5,
+        default:0
+    },
+    noOfRatings:{
+        type:Number,
+        default:0
+    },
+    coverImage:mongoose.Schema({
+        url:{
+            type:String,
+            default:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAU9U66Yy6S0h3cyyeG0XSfDBC6miYeUOt4hcND44ROw&s",
+            required:true
+        },
+        public_id:{
+            type:String,
+            required:true
+        }
+    }),
+    avgCost:{
+        type:Number,
+        required:true
     }
 })
 
