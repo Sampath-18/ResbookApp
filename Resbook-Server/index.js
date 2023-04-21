@@ -480,6 +480,8 @@ app.post("/updateRestaurant/addSection/:id", async (req,res) => {
         menu: [],// category Ids to be added later
         reservationCharge: sectionFrontEnd.reservationCharge,
         restaurantId: req.params.id,
+        cuisines: sectionFrontEnd.cuisines.split(","),
+        searchTags: sectionFrontEnd.searchTags.split(",")
       });
       await section.save();// add section to DB
       const secId = section._id;

@@ -21,6 +21,12 @@ const menuItemSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    type:{
+        type: String,
+        required: true,
+        enum: ["Veg","Non-Veg"],
+        default: "Veg"
+    },
     quantities: [quantitySchema],
     menuCategoryId: {
         type: mongoose.Schema.Types.ObjectId,

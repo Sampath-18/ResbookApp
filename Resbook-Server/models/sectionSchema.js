@@ -101,6 +101,12 @@ const sectionSchema = new mongoose.Schema({
   ratings:[{
     type:mongoose.Schema.Types.ObjectId,
     ref:'Review'
+  }],
+  cuisines:[{
+    type:String
+  }],
+  searchTags:[{
+    type:String
   }]
 });
 
