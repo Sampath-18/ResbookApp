@@ -1167,6 +1167,150 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.post("/restaurantLogin", async (req, res) => {
+  console.log("backend:", req.body);
+  if(!req.body.email || !req.body.password)
+  {
+    return res.status(400)
+    .json({ err: "missing credentials", success: false })
+  }
+  try {
+    const restaurantLogin = await Restaurant.findOne({ "admin.email": req.body.email });
+    if(restaurantLogin)
+    {
+      bcrypt.compare(req.body.password, restaurantLogin.admin.password, function(err,result) {
+        if(err)
+        {
+          console.error(err)
+          return res.json({ message:"Invalid credentials/ Wrong password", success: false });
+        }
+        else if(result)
+        {
+          return res.status(200).json({ success: true, restaurantId: restaurantLogin._id });
+        }
+      })
+    }
+    else
+    {
+      console.log("Backend:Restaurant not found")
+      return res.status(500).json({
+        message:"Restaurant doesn't exist",
+        success:false
+      })
+    }
+  } catch (err) {
+    console.log(err);
+    res.json({ success: false });
+  }
+});
+
+app.post("/setRestaurantPassword", async(req, res) => {
+  // console.log("set restaurant password called");
+  if(!req.body.email || !req.body.password)
+  {
+    return res.status(400)
+    .json({ err: "missing credentials", success: false })
+  }
+  try {
+    const restaurantLogin = await Restaurant.findOne({ "admin.email": req.body.email });
+    if(restaurantLogin)//user exists in our DB
+    {
+      const salt = await bcrypt.genSalt(10);
+      let secPassword = await bcrypt.hash(req.body.password, salt);
+      try {
+        const result = await Restaurant.updateOne(
+          {"admin.email": req.body.email},
+          {$set: {"admin.password": secPassword}},
+        )
+        // if(result.modifiedCount>0)
+        // {
+          console.log('updated restaurant password');
+          return res.status(200).json({
+            success:true,
+            message:"Updated restaurant password in DB successfully"
+          })
+        // }
+      } catch (error) {
+        return res.status(500).json({
+          success:false,
+          message:"failed to change the restaurant password"
+        })
+      }
+    }
+    else
+    {
+      console.log("Backend:Restaurant not found")
+      return res.status(500).json({
+        message:"Restaurant with given email not registered, please create a restaurant",
+        success:false
+      })
+    }
+  } catch (err) {
+    console.log(err);
+    res.json({ success: false, error:err });
+  }
+})
+
+
+app.post("/setUserPassword", async(req, res) => {
+  // console.log("set user password called");
+  if(!req.body.email || !req.body.password)
+  {
+    return res.status(400)
+    .json({ err: "missing credentials", success: false })
+  }
+  try {
+    const userLogin = await User.findOne({ email: req.body.email });
+    if(userLogin)//user exists in our DB
+    {
+      // code for comparing password with stored password
+      // bcrypt.compare(password, userLogin.password, function(err,result) {
+      //   if(err)
+      //   {
+      //     console.error(err)
+      //     return res.json({ message:"Invalid credentials/ Wrong password", success: false });
+      //   }
+      //   else if(result)
+      //   {
+      //     return res.status(200).json({ success: true, user: userLogin });
+      //   }
+      // })
+      const salt = await bcrypt.genSalt(10);
+      let secPassword = await bcrypt.hash(req.body.password, salt);
+      try {
+        const result = await User.updateOne(
+          {email: req.body.email},
+          {$set: {password: secPassword}},
+        )
+        // if(result.modifiedCount>0)
+        // {
+          console.log('updated user password');
+          return res.status(200).json({
+            success:true,
+            message:"Updated password in DB successfully"
+          })
+        // }
+      } catch (error) {
+        return res.status(500).json({
+          success:false,
+          message:"failed to change the password"
+        })
+      }
+    }
+    else
+    {
+      console.log("Backend:User not found")
+      return res.status(500).json({
+        message:"Email not registered, please sign-in to create an account",
+        success:false
+      })
+    }
+  } catch (err) {
+    console.log(err);
+    res.json({ success: false, error:err });
+  }
+})
+
 app.post("/retrieve/user", async (req, res) => {
   console.log("backend called for user retrieval:", req.body);
 });
