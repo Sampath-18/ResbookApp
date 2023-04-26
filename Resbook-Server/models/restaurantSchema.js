@@ -70,6 +70,10 @@ const restaurantSchema = new mongoose.Schema({
     avgCost:{
         type:Number,
         required:true
+    },
+    currentStatus:{
+        type:Boolean,
+        default:true
     }
 })
 
