@@ -11,6 +11,9 @@ const userLikingSchema = new mongoose.Schema({
         ref:'MenuItem',
         required:true
     }],
+    favCuisines: [{
+        type: String
+    }],
     favRestaurants: [{
         type: mongoose.Schema.Types.ObjectId,
         ref:'Restaurant',
