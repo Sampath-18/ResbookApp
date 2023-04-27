@@ -72,8 +72,9 @@ const restaurantSchema = new mongoose.Schema({
         required:true
     },
     currentStatus:{
-        type:Boolean,
-        default:true
+        type:String,
+        default:"Open",
+        enum:["Open","Close"]
     }
 })
 

@@ -907,133 +907,6 @@ app.post("/updateUserLikings/:id", async (req,res) => {
 })
 
 
-// app.post("/addRestaurant", async (req, res) => {
-//   const body = req.body;
-//   // console.log("Add restaurant", body);
-//   try {
-//     const restaurantFrontEnd = body.restaurant;
-//     const restaurant = new Restaurant({
-//       name: restaurantFrontEnd.name,
-//       location: restaurantFrontEnd.location,
-//       admin: restaurantFrontEnd.admin,
-//       parkingAvailable: restaurantFrontEnd.parkingAvailable,
-//       sections: [],
-//     });
-//     // sectionIds to be added after cretaing their objects in DB
-//     await restaurant.save();
-//     // console.log("Restaurant:",restaurant);
-//     const resId = restaurant._id;
-//     console.log("added res ID:", resId);
-//     const sections = body.sections;
-//     sections
-//       .forEach(async (sectionFrontEnd) => {
-//         // console.log(timeToDateForTimings(sectionFrontEnd.timing));
-//         const section = new Section({
-//           sectionName: sectionFrontEnd.sectionName,
-//           sectionDescription: sectionFrontEnd.sectionDescription,
-//           secImg: sectionFrontEnd.secImg,
-//           capacity: sectionFrontEnd.capacity,
-//           dineinAvailable: sectionFrontEnd.dineinAvailable,
-//           autoAcceptBookings: sectionFrontEnd.autoAcceptBookings,
-//           cateringAvailable: sectionFrontEnd.cateringAvailable,
-//           avgCost: sectionFrontEnd.avgCost,
-//           rating: sectionFrontEnd.rating,
-//           timing: timeToDateForTimings(sectionFrontEnd.timing),
-//           menu: [],// category Ids to be added later
-//           reservationCharge: sectionFrontEnd.reservationCharge,
-//           restaurantId: resId,
-//         });
-//         // console.log("......................section debug....................",section);
-//         //add section to DB
-//         await section.save();
-//         // console.log("section:", section);
-//         const secId = section._id;
-//         console.log("added section : ", secId);
-//         const menu = sectionFrontEnd.menu;
-//         menu.forEach(async (menuCategoryFrontend) => {
-//           const menuCategory = new MenuCategory({
-//             categoryName: menuCategoryFrontend.categoryName,
-//             sectionId: secId,
-//           });
-
-//           //add menuCategory to DB
-//           await menuCategory.save();
-//           console.log("added Category:", menuCategory._id);
-//           // console.log("Category:", menuCategory);
-//           const categoryId = menuCategory._id;
-//           menuCategoryFrontend.Items.forEach(async (menuItemFrontEnd) => {
-//             const menuItem = new MenuItem({
-//               itemName: menuItemFrontEnd.itemName,
-//               quantities: menuItemFrontEnd.quantities,
-//               menuCategoryId: categoryId,
-//             });
-
-//             // add menu item to DB
-//             await menuItem.save();
-//             // add item id to category document in DB
-//             console.log("menu Item:", menuItem._id);
-//             // console.log("menu Item:", menuItem);
-//             menuCategory.Items.push(menuItem._id);
-//             await menuCategory.save();
-//             console.log(
-//               "\n\nitem : ",
-//               menuItem.itemName,
-//               " added to category : ",
-//               menuCategory.categoryName,
-//               "\n\n"
-//             );
-//             // .catch(err)
-//             // {
-//             //   console.log("error adding item to category......")
-//             // }
-//           });
-
-//           // add menu category id to section
-//           section.menu.push(categoryId);
-//           await section.save();
-//           console.log(
-//             "\n\ncategory:",
-//             menuCategory.categoryName,
-//             " added to section:",
-//             section.sectionName,
-//             "\n\n"
-//           );
-//           // .catch(err)
-//           // {
-//           //   console.log("error adding category to section......")
-//           // }
-//         }); // category saved and added to section's menu
-//       }) //section saved
-//       .catch(err);
-//     {
-//       res.status(500).json({ error: "failed to save section", success: false });
-//     }
-//     // add section id to restaurant
-//     restaurant.sections.push(secId);
-//     await restaurant.save();
-//     console.log(
-//       "\n\nsection",
-//       section.sectionName,
-//       " added to restaurant:",
-//       restaurant.name,
-//       "\n\n"
-//     );
-//     // .catch(err)
-//     // {
-//     //   console.log("error adding section to restaurant......")
-//     // }
-//     console.log("Restaurant saved and updated: from back-end........");
-//     return res.status(201).json({
-//       message: "Restaurant added successfully",
-//       success: true,
-//     });
-//     // .catch(err)
-//     // {
-//     //   res.status(500).json({ error: "failed to register restaurant", success: false });
-//     // }
-//   } catch (error) {}
-// });
-
 app.post("/signup", async (req, res) => {
   // console.log("body: ", req.body);
   const { fname, lname, email, password, cpassword } = req.body;
@@ -1382,6 +1255,36 @@ app.post("/bookDineinSection", async(req,res) => {
   } catch (error) {
     return res.status(500).json({
       message:"Booking failed",
+      success:false
+    })
+  }
+})
+
+app.post("/addUserFavCuisine/:id", async(req,res) => {
+  try {
+    console.log(req.body);
+    const userId = req.params.id
+    try {
+      const result = await UserLikings.updateOne(
+        { userId: userId },
+        { $addToSet: { favCuisines: {$each :req.body.cuisines} } },
+      )
+      console.log('added user fav cuisines');
+      return res.status(200).json({
+        success:true,
+        message:"added user favcuisines in DB successfully"
+      })
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        message:"adding favCuisines failed",
+        success:false
+      })
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message:"adding favCuisines failed",
       success:false
     })
   }
