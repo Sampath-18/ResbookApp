@@ -1018,11 +1018,14 @@ app.post("/login", async (req, res) => {
         if(err)
         {
           console.error(err)
-          return res.json({ message:"Invalid credentials/ Wrong password", success: false });
+          return res.json({ message:"Error comparing passwords", success: false });
         }
         else if(result)
         {
           return res.status(200).json({ success: true, user: userLogin });
+        }
+        else{
+          return res.json({ message:"Invalid credentials/ Wrong password", success: false });
         }
       })
     }
@@ -1055,11 +1058,14 @@ app.post("/restaurantLogin", async (req, res) => {
         if(err)
         {
           console.error(err)
-          return res.json({ message:"Invalid credentials/ Wrong password", success: false });
+          return res.status(500).json({ message:"Error comparing passwords", success: false });
         }
         else if(result)
         {
           return res.status(200).json({ success: true, restaurantId: restaurantLogin._id });
+        }
+        else{
+          return res.status(500).json({ success: false, message:"Invalid credentials/ Wrong password" });
         }
       })
     }
