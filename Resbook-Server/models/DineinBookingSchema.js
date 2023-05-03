@@ -38,7 +38,7 @@ const dineinBookingSchema = new mongoose.Schema({
     status:{
         type:String,
         required:true,
-        enum:['Booked-Open','Booked-Closed','Cancelled'],
+        enum:['To be Accepted','Rejected','Booked-Open','Booked-Closed','Cancelled'],
         default:"Booked-Open"
     }
 })
