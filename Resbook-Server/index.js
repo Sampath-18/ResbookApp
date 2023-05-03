@@ -278,6 +278,34 @@ app.get("/getSection/:id", async(req,res) => {//return section given a section I
   }
 })
 
+app.post("/getSectionsBookings", async(req,res) => {
+  try {
+    // console.log(req.body);
+    const sectionId = req.params.id
+    const bookings = await DineinBookings.find({ sectionId: {$in:req.body.sectionIds} , reservationTime: { $gte: new Date(req.body.startDate), $lte: new Date(req.body.endDate) } })
+    if (bookings && bookings.length>0) {
+      // console.log("Backend:Bookings found");
+      // console.log(bookings);
+      res.status(201).json({
+        message:"Section found",
+        success:true,
+        bookings:bookings
+      })
+    } else {
+      res.status(404).json({
+        message:"No Bookings or some error",
+        success:false
+      })
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message:"Error",
+      success:false,
+      error:error
+    })
+  }
+} )
+
 app.get("/:id/getSections", async(req,res) => {//return sections given a restaurant Id
   try {
     const restaurantId = req.params.id
@@ -1261,6 +1289,38 @@ app.post("/bookDineinSection", async(req,res) => {
   } catch (error) {
     return res.status(500).json({
       message:"Booking failed",
+      success:false
+    })
+  }
+})
+
+app.post("/updateDineinBookingStatus/:id", async(req,res) => {
+  try {
+    const bookingId = req.params.id
+    const status = req.body.status
+    try {
+      const result = await DineinBookings.updateOne(
+        {"_id": bookingId},
+        {$set: {"status": status}},
+      )
+      // if(result.modifiedCount>0)
+      // {
+        console.log('updated booking status');
+        return res.status(200).json({
+          success:true,
+          message:"Updated booking status in DB successfully"
+        })
+      // }
+    } catch (error) {
+      return res.status(500).json({
+        success:false,
+        message:"failed to change the booking status"
+      })
+    }
+    
+  } catch (error) {
+    return res.status(500).json({
+      message:"Error",
       success:false
     })
   }
