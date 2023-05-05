@@ -1,35 +1,37 @@
 const express = require("express");
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 require("dotenv").config();
 require("./db/conn");
 const User = require("./models/userSchema");
 const { MenuCategory, MenuItem } = require("./models/menuCategorySchema");
 const Restaurant = require("./models/restaurantSchema");
 const Section = require("./models/sectionSchema");
-const Review = require("./models/ReviewSchema")
-const UserLikings = require("./models/UserLikingsSchema")
+const Review = require("./models/ReviewSchema");
+const UserLikings = require("./models/UserLikingsSchema");
 // console.log(User);
 const cors = require("cors");
 // const bodyParser = require('body-parser');
 const app = express();
 
-const multer  = require('multer');
+const multer = require("multer");
 
 // Set up storage for uploaded files
 const storage = multer.memoryStorage();
 const upload = multer({
   limits: {
     fieldSize: 10 * 1024 * 1024, // 10MB
-    fileSize: 50 * 1024 * 1024 // 50MB
-  }, storage: storage });
+    fileSize: 50 * 1024 * 1024, // 50MB
+  },
+  storage: storage,
+});
 
-const cloudinary = require("cloudinary")
+const cloudinary = require("cloudinary");
 
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-})
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const port = process.env.REACT_APP_PORT;
 app.use(cors());
@@ -111,7 +113,6 @@ const timeToDateForTimings = (timing) => {
   return timing;
 };
 
-
 // {
 //   "sectionName": "Bar",
 //   "sectionDescription": "Alcoholics this one is for you",
@@ -156,348 +157,367 @@ const timeToDateForTimings = (timing) => {
 //   "reservationCharge": 25
 // }
 
-app.get("/getUser/:id",async (req,res) => {
+app.get("/getUser/:id", async (req, res) => {
   try {
-    const user = await User.findById(req.params.id)
-    if(user)
-    {
+    const user = await User.findById(req.params.id);
+    if (user) {
       console.log("Back-end: User found");
       return res.status(201).json({
-        message:"User found",
-        success:true,
-        user:user
-      })
-    }
-    else
-    {
+        message: "User found",
+        success: true,
+        user: user,
+      });
+    } else {
       return res.status(404).json({
-        message:"User not found",
-        success:false
-      })
+        message: "User not found",
+        success: false,
+      });
     }
   } catch (error) {
     return res.status(500).json({
-      message:"Error: retrieving user",
-      success:false,
-      error:error
-    })
+      message: "Error: retrieving user",
+      success: false,
+      error: error,
+    });
   }
-})
+});
 
-
-app.get("/getRestaurants", async (req,res) => {
+app.get("/getRestaurants", async (req, res) => {
   try {
-    const restaurants = await Restaurant.find({})
-    if(restaurants)
-    {
+    const restaurants = await Restaurant.find({});
+    if (restaurants) {
       console.log("Back-end: Restaurants found");
       return res.status(201).json({
-        message:"Restaurants found",
-        success:true,
-        restaurants:restaurants
-      })
-    }
-    else
-    {
+        message: "Restaurants found",
+        success: true,
+        restaurants: restaurants,
+      });
+    } else {
       return res.status(404).json({
-        message:"No restaurants found",
-        success:false
-      })
+        message: "No restaurants found",
+        success: false,
+      });
     }
-    
   } catch (error) {
     return res.status(500).json({
-      message:"Error",
-      success:false,
-      error:error
-    })
+      message: "Error",
+      success: false,
+      error: error,
+    });
   }
-})
+});
 
-app.get("/getSelectedRestaurants", async (req,res) => {//pass restaurant ids in req.body
+app.get("/getSelectedRestaurants", async (req, res) => {
+  //pass restaurant ids in req.body
   try {
-    let ids = []
+    let ids = [];
     for (const id of req.body.ids) {
-      ids.push(new mongoose.Types.ObjectId(id))
+      ids.push(new mongoose.Types.ObjectId(id));
     }
     console.log(ids);
-    const restaurants = await Restaurant.find({_id: {$in:ids}})
-    if(restaurants)
-    {
+    const restaurants = await Restaurant.find({ _id: { $in: ids } });
+    if (restaurants) {
       console.log("Back-end: Restaurants found");
       return res.status(201).json({
-        message:"Restaurants found",
-        success:true,
-        restaurants:restaurants
-      })
-    }
-    else
-    {
+        message: "Restaurants found",
+        success: true,
+        restaurants: restaurants,
+      });
+    } else {
       return res.status(404).json({
-        message:"No restaurants found",
-        success:false
-      })
+        message: "No restaurants found",
+        success: false,
+      });
     }
-    
   } catch (error) {
     console.error(error);
     return res.status(500).json({
-      message:"Error",
-      success:false,
-      error:error
-    })
+      message: "Error",
+      success: false,
+      error: error,
+    });
   }
-})
+});
 
-app.get("/getSection/:id", async(req,res) => {//return section given a section Id
+app.get("/getSection/:id", async (req, res) => {
+  //return section given a section Id
   try {
-    const sid=req.params.id
-    const section = await Section.findById(sid)
-    if(section)
-    {
+    const sid = req.params.id;
+    const section = await Section.findById(sid);
+    if (section) {
       console.log("Backend:Section found");
       res.status(201).json({
-        message:"Section found",
-        success:true,
-        section:section
-      })
-    }
-    else
-    {
+        message: "Section found",
+        success: true,
+        section: section,
+      });
+    } else {
       res.status(404).json({
-        message:"Section not found in DB",
-        success:false
-      })
+        message: "Section not found in DB",
+        success: false,
+      });
     }
   } catch (error) {
     return res.status(500).json({
-      message:"Error",
-      success:false,
-      error:error
-    })
+      message: "Error",
+      success: false,
+      error: error,
+    });
   }
-})
+});
 
-app.post("/getSectionsBookings", async(req,res) => {
+app.post("/getSectionsBookings", async (req, res) => {
   try {
     // console.log(req.body);
-    const sectionId = req.params.id
-    const bookings = await DineinBookings.find({ sectionId: {$in:req.body.sectionIds} , reservationTime: { $gte: new Date(req.body.startDate), $lte: new Date(req.body.endDate) } })
-    if (bookings && bookings.length>0) {
+    const sectionId = req.params.id;
+    const bookings = await DineinBookings.find({
+      sectionId: { $in: req.body.sectionIds },
+      reservationTime: {
+        $gte: new Date(req.body.startDate),
+        $lte: new Date(req.body.endDate),
+      },
+    });
+    if (bookings && bookings.length > 0) {
       // console.log("Backend:Bookings found");
       // console.log(bookings);
       res.status(201).json({
-        message:"Section found",
-        success:true,
-        bookings:bookings
-      })
+        message: "Section found",
+        success: true,
+        bookings: bookings,
+      });
     } else {
       res.status(404).json({
-        message:"No Bookings or some error",
-        success:false
-      })
+        message: "No Bookings or some error",
+        success: false,
+      });
     }
   } catch (error) {
     return res.status(500).json({
-      message:"Error",
-      success:false,
-      error:error
-    })
+      message: "Error",
+      success: false,
+      error: error,
+    });
   }
-} )
+});
 
-app.get("/:id/getSections", async(req,res) => {//return sections given a restaurant Id
+app.get("/:id/getSections", async (req, res) => {
+  //return sections given a restaurant Id
   try {
-    const restaurantId = req.params.id
-    const restaurant = await Restaurant.findById(restaurantId)
-    if(restaurant)
-    {
-      const secIds = restaurant.sections
-      const sections = []
+    const restaurantId = req.params.id;
+    const restaurant = await Restaurant.findById(restaurantId);
+    if (restaurant) {
+      const secIds = restaurant.sections;
+      const sections = [];
       for (const secId of secIds) {
-        const section = await Section.findById(secId)
-        if(section)
-        {
-          sections.push(section)
-        }
-        else{
-          console.log("Section with id:",secId,"not found in DB");
+        const section = await Section.findById(secId);
+        if (section) {
+          sections.push(section);
+        } else {
+          console.log("Section with id:", secId, "not found in DB");
         }
       }
       return res.status(201).json({
-        message:"Sections found for restaurant:"+restaurant.name,
-        success:true,
-        sections:sections
-      })
-    }
-    else
-    {
+        message: "Sections found for restaurant:" + restaurant.name,
+        success: true,
+        sections: sections,
+      });
+    } else {
       return res.status(404).json({
-        message:"Restaurant not found",
-        success:false
-      })
+        message: "Restaurant not found",
+        success: false,
+      });
     }
   } catch (error) {
     console.error(error);
     return res.status(500).json({
-      message:"Error/exception caught in Backend",
-      success:false
-    })
+      message: "Error/exception caught in Backend",
+      success: false,
+    });
   }
-})
+});
 
-app.get("/getRestaurant/:id", async (req,res) => {
+app.get("/getRestaurant/:id", async (req, res) => {
   try {
-    const rid=req.params.id
-    const restaurant = await Restaurant.findById(rid)
-    if(restaurant)
-    {
+    const rid = req.params.id;
+    const restaurant = await Restaurant.findById(rid);
+    if (restaurant) {
       console.log("Restaurant found");
       res.status(201).json({
-        message:"Restaurant found",
-        success:true,
-        restaurant:restaurant
-      })
-    }
-    else
-    {
+        message: "Restaurant found",
+        success: true,
+        restaurant: restaurant,
+      });
+    } else {
       res.status(404).json({
-        message:"Restaurant not found in DB",
-        success:false
-      })
+        message: "Restaurant not found in DB",
+        success: false,
+      });
     }
   } catch (error) {
     return res.status(500).json({
-      message:"Error",
-      success:false,
-      error:error
-    })
+      message: "Error",
+      success: false,
+      error: error,
+    });
   }
-})
+});
 
-app.get("/:id/getMenuCategories", async (req,res) => {
+app.get("/:id/getMenuCategories", async (req, res) => {
   try {
     console.log(req.params.id);
-    const secId=req.params.id
-    const section = await Section.findById(secId)
-    if(section)
-    {
-      const menuCategoryIds = section.menu
+    const secId = req.params.id;
+    const section = await Section.findById(secId);
+    if (section) {
+      const menuCategoryIds = section.menu;
       // console.log(section);
-      const menuCategories = []
-      for(const menuCategoryId of menuCategoryIds) {
-        const category = await MenuCategory.findById(menuCategoryId)
-        if(category)
-        {
-          menuCategories.push(category)
-        }
-        else
-        {
-          console.log("category with id:",menuCategoryId," not found ");
+      const menuCategories = [];
+      for (const menuCategoryId of menuCategoryIds) {
+        const category = await MenuCategory.findById(menuCategoryId);
+        if (category) {
+          menuCategories.push(category);
+        } else {
+          console.log("category with id:", menuCategoryId, " not found ");
         }
       }
       return res.status(201).json({
-        message:"Found categories",
-        success:true,
-        menuCategories:menuCategories
-      })
-    }
-    else
-    {
+        message: "Found categories",
+        success: true,
+        menuCategories: menuCategories,
+      });
+    } else {
       return res.status(404).json({
-        message:"Section not found",
-        success:false
-      })
+        message: "Section not found",
+        success: false,
+      });
     }
   } catch (error) {
     console.error(error);
     return res.status(500).json({
-      message:"Error/exception caught in Backend",
-      success:false
-    })
+      message: "Error/exception caught in Backend",
+      success: false,
+    });
   }
-})
+});
 
-app.get("/getMenuCategory/:id", async(req,res) => {
+app.get("/getMenuCategory/:id", async (req, res) => {
   try {
-    const categoryId = req.params.id
-    const category = await MenuCategory.findById(categoryId)
-    if(category)
-    {
-      const itemIds = category.Items
-      const items=[]
-      for (const itemId of itemIds ) {
-        const item = await MenuItem.findById(itemId)
-        if(item)
-        {
-          items.push(item)
-        }
-        else
-        {
-          console.log("Item id:",itemId,"not found");
+    const categoryId = req.params.id;
+    const category = await MenuCategory.findById(categoryId);
+    if (category) {
+      const itemIds = category.Items;
+      const items = [];
+      for (const itemId of itemIds) {
+        const item = await MenuItem.findById(itemId);
+        if (item) {
+          items.push(item);
+        } else {
+          console.log("Item id:", itemId, "not found");
         }
       }
-      category.Items = items
+      category.Items = items;
       return res.status(201).json({
-        message:"Category Found",
-        success:true,
-        menuCategory:category
-      })
-    }
-    else
-    {
+        message: "Category Found",
+        success: true,
+        menuCategory: category,
+      });
+    } else {
       return res.status(404).json({
-        message:"Menu Category not found",
-        success:false
-      })
+        message: "Menu Category not found",
+        success: false,
+      });
     }
   } catch (error) {
     console.error(error);
     return res.status(500).json({
-      message:"Error/exception caught in Backend",
-      success:false
-    })
+      message: "Error/exception caught in Backend",
+      success: false,
+    });
   }
-})
+});
 
-app.get("/getUserLikings/:id", async(req,res) => {
+app.get("/:id/getWholeSectionMenu", async (req, res) => {
   try {
-    const userliking = await UserLikings.findOne({userId:req.params.id})
-    if(userliking)
-    {
+    // console.log(req.params.id);
+    const secId = req.params.id;
+    const section = await Section.findById(secId);
+    if (section) {
+      const menuCategoryIds = section.menu;
+      // console.log(section);
+      const menuCategories = [];
+      for (const menuCategoryId of menuCategoryIds) {
+        const category = await MenuCategory.findById(menuCategoryId);
+        if (category) {
+          const itemIds = category.Items;
+          const items = [];
+          for (const itemId of itemIds) {
+            const item = await MenuItem.findById(itemId);
+            if (item) {
+              items.push(item);
+            } else {
+              console.log("Item id:", itemId, "not found");
+            }
+          }
+          category.Items = items;
+          menuCategories.push(category);
+        } else {
+          console.log("category with id:", menuCategoryId, " not found ");
+        }
+      }
+      return res.status(201).json({
+        message: "Found categories",
+        success: true,
+        menu: menuCategories,
+      });
+    } else {
+      return res.status(404).json({
+        message: "Section not found",
+        success: false,
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Error/exception caught in Backend",
+      success: false,
+    });
+  }
+});
+
+app.get("/getUserLikings/:id", async (req, res) => {
+  try {
+    const userliking = await UserLikings.findOne({ userId: req.params.id });
+    if (userliking) {
       return res.status(200).json({
-        message:"User likings retrieved successfully!!",
-        success:true,
-        userlikings:userliking
-      })
-    }
-    else{
+        message: "User likings retrieved successfully!!",
+        success: true,
+        userlikings: userliking,
+      });
+    } else {
       return res.status(404).json({
-        message:"User likings not found",
-        success:false
-      })
+        message: "User likings not found",
+        success: false,
+      });
     }
   } catch (error) {
     return res.status(500).json({
-      message:"Error at backend",
-      success:false
-    })
+      message: "Error at backend",
+      success: false,
+    });
   }
-})
+});
 
-app.post("/updateRestaurant/addSection/:id", async (req,res) => {
+app.post("/updateRestaurant/addSection/:id", async (req, res) => {
   try {
     // console.log("id:",req.params.id);
-    const restaurant = await Restaurant.findById(req.params.id)
+    const restaurant = await Restaurant.findById(req.params.id);
     // console.log("Restaurant:",restaurant)
-    if(restaurant)
-    {
-      const sectionFrontEnd = req.body
+    if (restaurant) {
+      const sectionFrontEnd = req.body;
       // console.log("restaurant Id:",req.params.id);
       const section = new Section({
         sectionName: sectionFrontEnd.sectionName,
         sectionDescription: sectionFrontEnd.sectionDescription,
-        secImg: [],//sectionFrontEnd.secImg,
+        secImg: [], //sectionFrontEnd.secImg,
         capacity: sectionFrontEnd.capacity,
         dineinAvailable: sectionFrontEnd.dineinAvailable,
         autoAcceptBookings: sectionFrontEnd.autoAcceptBookings,
@@ -505,143 +525,197 @@ app.post("/updateRestaurant/addSection/:id", async (req,res) => {
         avgCost: sectionFrontEnd.avgCost,
         // rating: 0, initially no ratings
         timing: timeToDateForTimings(sectionFrontEnd.timing),
-        menu: [],// category Ids to be added later
+        menu: [], // category Ids to be added later
         reservationCharge: sectionFrontEnd.reservationCharge,
         restaurantId: req.params.id,
         cuisines: sectionFrontEnd.cuisines.split(","),
-        searchTags: sectionFrontEnd.searchTags.split(",")
+        searchTags: sectionFrontEnd.searchTags.split(","),
       });
-      await section.save();// add section to DB
+      await section.save(); // add section to DB
       const secId = section._id;
       // console.log("added section : ", secId);
 
-      restaurant.sections.push(secId)
-      await restaurant.save()
-      console.log( "\n\nSection:", section.sectionName, " added to Restaurant:", restaurant.name, "\n\n" );
+      restaurant.sections.push(secId);
+      await restaurant.save();
+      console.log(
+        "\n\nSection:",
+        section.sectionName,
+        " added to Restaurant:",
+        restaurant.name,
+        "\n\n"
+      );
       return res.status(201).json({
-        message:"Section added successfully",
+        message: "Section added successfully",
         success: true,
-        sectionId: secId
-      })
-    }
-    else
-    {
+        sectionId: secId,
+      });
+    } else {
       return res.status(501).json({
-        message:"Restaurant with id : "+req.params._id+" not found in DB",
-        success: false
-      })
+        message: "Restaurant with id : " + req.params._id + " not found in DB",
+        success: false,
+      });
     }
   } catch (error) {
-    console.error(error)
+    console.error(error);
     res.status(500).json({
-      message:"Section addition failed",
-      success: false
-    })
+      message: "Section addition failed",
+      success: false,
+    });
   }
-})
+});
 
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-app.post("/updateSectionImages/:id", upload.array('secImg'), async (req,res) => {
-  try {
-    const section = await Section.findById(req.params.id)
-    if(section)
-    {
-      // console.log(Object.keys(req))
-      // console.log(Object.keys(req.body))
-      const images = req.files.map(file => file.buffer); // Retrieve image data from uploaded files
-      // console.log(images);
-      // console.log(req.files);
-      // const images = req.files.secImg
-      const secImg = []
-      // for (const image of images) {
-      //   const mycloudImage = await cloudinary.v2.uploader.upload(image,{
-      //     folder: "Resbook/MenuItemImages",
-      //   })
-      //   console.log("url:",mycloudImage)
-      //   secImg.push({
-      //     url:mycloudImage.secure_url,
-      //     public_id:mycloudImage.public_id
-      //   })
-      // }
-      for (const image of images) {
-        const tempFilePath = path.join(os.tmpdir(), `${Date.now()}-${Math.round(Math.random() * 1e9)}.jpg`);
-        
-        try {
-          fs.writeFileSync(tempFilePath, image);
-          const mycloudImage = await cloudinary.v2.uploader.upload(tempFilePath, {
-            folder: "Resbook/SectionImages",
-          });
-          // console.log("url:",mycloudImage)
-          secImg.push({
-            url:mycloudImage.secure_url,
-            public_id:mycloudImage.public_id
-          })
-        } catch (error) {
-          console.error(error);
-        } finally {
-          fs.unlinkSync(tempFilePath); // delete the temporary file
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+app.post(
+  "/updateSectionImages/:id",
+  upload.array("secImg"),
+  async (req, res) => {
+    try {
+      const section = await Section.findById(req.params.id);
+      if (section) {
+        // console.log(Object.keys(req))
+        // console.log(Object.keys(req.body))
+        const images = req.files.map((file) => file.buffer); // Retrieve image data from uploaded files
+        // console.log(images);
+        // console.log(req.files);
+        // const images = req.files.secImg
+        const secImg = [];
+        // for (const image of images) {
+        //   const mycloudImage = await cloudinary.v2.uploader.upload(image,{
+        //     folder: "Resbook/MenuItemImages",
+        //   })
+        //   console.log("url:",mycloudImage)
+        //   secImg.push({
+        //     url:mycloudImage.secure_url,
+        //     public_id:mycloudImage.public_id
+        //   })
+        // }
+        for (const image of images) {
+          const tempFilePath = path.join(
+            os.tmpdir(),
+            `${Date.now()}-${Math.round(Math.random() * 1e9)}.jpg`
+          );
+
+          try {
+            fs.writeFileSync(tempFilePath, image);
+            const mycloudImage = await cloudinary.v2.uploader.upload(
+              tempFilePath,
+              {
+                folder: "Resbook/SectionImages",
+              }
+            );
+            // console.log("url:",mycloudImage)
+            secImg.push({
+              url: mycloudImage.secure_url,
+              public_id: mycloudImage.public_id,
+            });
+          } catch (error) {
+            console.error(error);
+          } finally {
+            fs.unlinkSync(tempFilePath); // delete the temporary file
+          }
         }
+        section.secImg = secImg;
+        await section.save();
+        console.log(
+          "Backend: images successfully uploaded to section:",
+          section.sectionName
+        );
+        return res.status(201).json({
+          message: "Section images added successfully",
+          success: true,
+        });
+      } else {
+        res.status(501).json({
+          message: "Section with id: " + req.params.id + " not found in DB.",
+          success: false,
+        });
       }
-      section.secImg = secImg
-      await section.save()
-      console.log("Backend: images successfully uploaded to section:",section.sectionName);
-      return res.status(201).json({
-        message:"Section images added successfully",
-        success: true
-      })
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        message: "Error:Images addition for section failed",
+        success: false,
+      });
     }
-    else{
-      res.status(501).json({
-        message:"Section with id: "+req.params.id+" not found in DB.",
-        success: false
-      })
-    }
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({
-      message:"Error:Images addition for section failed",
-      success: false
-    })
   }
-})
+);
 
-app.post("/updateRestaurant/updateSection/addMenuCategory/:id",async (req,res) => {
+app.post(
+  "/updateRestaurant/updateSection/addMenuCategory/:id",
+  async (req, res) => {
+    try {
+      const section = await Section.findById(req.params.id);
+      if (section) {
+        const menuCategoryFrontend = req.body;
+        const menuCategory = new MenuCategory({
+          categoryName: menuCategoryFrontend.categoryName,
+          sectionId: req.params.id,
+        });
+        await menuCategory.save(); //add menuCategory to DB
+        console.log("added Category:", menuCategory._id);
+        section.menu.push(menuCategory._id);
+        await section.save();
+        console.log(
+          "\n\ncategory:",
+          menuCategory.categoryName,
+          " added to section:",
+          section.sectionName,
+          "\n\n"
+        );
+        return res.status(201).json({
+          message: "Menu Category added successfully",
+          success: true,
+          menuCategoryId: menuCategory._id,
+        });
+      } else {
+        res.status(501).json({
+          message: "Section with id: " + req.params.id + " not found in DB.",
+          success: false,
+        });
+      }
+    } catch (error) {
+      res.status(500).json({
+        message: "Menu Category addition failed",
+        success: false,
+      });
+    }
+  }
+);
+
+app.post("/updateMenuItem/:id", async (req, res) => {
   try {
-    const section = await Section.findById(req.params.id)
-    if(section)
-    {
-      const menuCategoryFrontend = req.body
-      const menuCategory = new MenuCategory({
-        categoryName: menuCategoryFrontend.categoryName,
-        sectionId: req.params.id,
-      })
-      await menuCategory.save();//add menuCategory to DB
-      console.log("added Category:", menuCategory._id)
-      section.menu.push(menuCategory._id);
-      await section.save();
-      console.log( "\n\ncategory:", menuCategory.categoryName, " added to section:", section.sectionName, "\n\n" );
+    const options = { new: true };
+    const menuId = req.params.id;
+    const item = req.body;
+    // console.log(item);
+    const result = await MenuItem.findOneAndUpdate(
+      { _id: menuId },
+      { $set: item },
+      options
+    );
+    if (result) {
+      // if update is successful
       return res.status(201).json({
-        message:"Menu Category added successfully",
-        success:true,
-        menuCategoryId: menuCategory._id
-      })
-    }
-    else{
-      res.status(501).json({
-        message:"Section with id: "+req.params.id+" not found in DB.",
-        success: false
-      })
+        message: "Menu Item updated successfully",
+        success: true,
+      });
+    } else {
+      return res.status(501).json({
+        message: "Menu Item updation failed(maybe not found)",
+        success: false,
+      });
     }
   } catch (error) {
-    res.status(500).json({
-      message:"Menu Category addition failed",
-      success: false
-    })
+    console.error(error);
+    return res.status(500).json({
+      message: "Menu Item updation failed(caught some error)",
+      success: false,
+      error: error,
+    });
   }
-})
-
+});
 
 // {
 //   "itemName":"Chilli Chicken",
@@ -661,279 +735,389 @@ app.post("/updateRestaurant/updateSection/addMenuCategory/:id",async (req,res) =
 //     "avgPersons":3
 //   }]
 // }
-app.post("/updateRestaurant/updateSection/updateMenuCategory/addMenuItem/:id", async (req,res) => {
-  try {
-    // console.log("add item -Backend called for id:",req.params.id)
-    const menuCategory = await MenuCategory.findById(req.params.id)
-    if(menuCategory)
-    {
-      const menuItemFrontEnd = req.body
-      const menuItem = new MenuItem({
-        itemName: menuItemFrontEnd.itemName,
-        quantities: menuItemFrontEnd.quantities,
-        menuCategoryId: req.params.id,
-      })
-      // add menu item to DB
-      await menuItem.save();
-      // console.log("menu Item:", menuItem._id);
-      // console.log("menu Item:", menuItem);
-      // add item id to category document in DB
-      menuCategory.Items.push(menuItem._id);
-      await menuCategory.save();
-      console.log( "\nitem : ", menuItem.itemName, " added to category : ", menuCategory.categoryName, "\n" );
-      res.status(201).json({
-        message:"Menu Item : "+menuItem.itemName+" added to Menu Category : "+menuCategory.categoryName,
-        success:true,
-        menuItemId:menuItem._id
-      })
-    }
-    else
-    {
-      res.status(501).json({
-        message:"Menu Category with id: "+req.params.id+" not found in DB.",
-        success: false
-      })
-    }
-  } catch (error) {
-    res.status(500).json({
-      message:"Menu Item addition failed",
-      success: false
-    })
-  }
-})
-
-app.post("/updateRestaurant/updateImage/:id", upload.single('coverImage'), async (req,res) => {
-  try {
-    // console.log("bedore file upload");
-    let restaurant = await Restaurant.findById(req.params.id)
-    if(restaurant)
-    {
-      const coverImage = req.file.buffer
-      // console.log(coverImage)
-      const tempFilePath = path.join(os.tmpdir(), `${Date.now()}-${Math.round(Math.random() * 1e9)}.jpg`);
-      try {
-        fs.writeFileSync(tempFilePath, coverImage);
-        const mycloudImage = await cloudinary.v2.uploader.upload(tempFilePath, {
-          folder: "Resbook/RestaurantImages",
+app.post(
+  "/updateRestaurant/updateSection/updateMenuCategory/addMenuItem/:id",
+  async (req, res) => {
+    try {
+      // console.log("add item -Backend called for id:",req.params.id)
+      const menuCategory = await MenuCategory.findById(req.params.id);
+      if (menuCategory) {
+        const menuItemFrontEnd = req.body;
+        const menuItem = new MenuItem({
+          itemName: menuItemFrontEnd.itemName,
+          quantities: menuItemFrontEnd.quantities,
+          menuCategoryId: req.params.id,
         });
-        // console.log("url:",mycloudImage)
-        restaurant.coverImage = {
-          url:mycloudImage.secure_url,
-          public_id:mycloudImage.public_id
-        }
-        await restaurant.save()
-      } catch (error) {
-        console.error(error);
-      } finally {
-        fs.unlinkSync(tempFilePath); // delete the temporary file
+        // add menu item to DB
+        await menuItem.save();
+        // console.log("menu Item:", menuItem._id);
+        // console.log("menu Item:", menuItem);
+        // add item id to category document in DB
+        menuCategory.Items.push(menuItem._id);
+        await menuCategory.save();
+        console.log(
+          "\nitem : ",
+          menuItem.itemName,
+          " added to category : ",
+          menuCategory.categoryName,
+          "\n"
+        );
+        res.status(201).json({
+          message:
+            "Menu Item : " +
+            menuItem.itemName +
+            " added to Menu Category : " +
+            menuCategory.categoryName,
+          success: true,
+          menuItemId: menuItem._id,
+        });
+      } else {
+        res.status(501).json({
+          message:
+            "Menu Category with id: " + req.params.id + " not found in DB.",
+          success: false,
+        });
       }
-      return res.status(201).json({
-        message:"Image updated successfully",
-        success:true,
-        image: restaurant.coverImage
-      })
+    } catch (error) {
+      res.status(500).json({
+        message: "Menu Item addition failed",
+        success: false,
+      });
     }
-    else
-    {
-      res.status(404).json({
-        message:"Restaurant with id: "+req.params.id+" not found in DB.",
-        success: false
-      })
-    }
-  } catch (error) {
-    // console.error(error)
-    res.status(500).json({
-      message:"Restaurant image updation failed",
-      success: false,
-      error:error
-    })
   }
-})
+);
 
-app.post("/addRestaurant",async (req,res) => {
+app.post(
+  "/updateRestaurant/updateImage/:id",
+  upload.single("coverImage"),
+  async (req, res) => {
+    try {
+      // console.log("bedore file upload");
+      let restaurant = await Restaurant.findById(req.params.id);
+      if (restaurant) {
+        const coverImage = req.file.buffer;
+        // console.log(coverImage)
+        const tempFilePath = path.join(
+          os.tmpdir(),
+          `${Date.now()}-${Math.round(Math.random() * 1e9)}.jpg`
+        );
+        try {
+          fs.writeFileSync(tempFilePath, coverImage);
+          const mycloudImage = await cloudinary.v2.uploader.upload(
+            tempFilePath,
+            {
+              folder: "Resbook/RestaurantImages",
+            }
+          );
+          // console.log("url:",mycloudImage)
+          restaurant.coverImage = {
+            url: mycloudImage.secure_url,
+            public_id: mycloudImage.public_id,
+          };
+          await restaurant.save();
+        } catch (error) {
+          console.error(error);
+        } finally {
+          fs.unlinkSync(tempFilePath); // delete the temporary file
+        }
+        return res.status(201).json({
+          message: "Image updated successfully",
+          success: true,
+          image: restaurant.coverImage,
+        });
+      } else {
+        res.status(404).json({
+          message: "Restaurant with id: " + req.params.id + " not found in DB.",
+          success: false,
+        });
+      }
+    } catch (error) {
+      // console.error(error)
+      res.status(500).json({
+        message: "Restaurant image updation failed",
+        success: false,
+        error: error,
+      });
+    }
+  }
+);
+
+app.post("/addRestaurant", async (req, res) => {
   try {
-    const restaurantFrontEnd = req.body
+    const restaurantFrontEnd = req.body;
     // console.log(restaurantFrontEnd);
-    const restaurantExist = await Restaurant.findOne({'admin.email':restaurantFrontEnd.admin.email})
-    if(restaurantExist)
-    {
+    const restaurantExist = await Restaurant.findOne({
+      "admin.email": restaurantFrontEnd.admin.email,
+    });
+    if (restaurantExist) {
       return res.status(500).json({
-        message:"Already a restaurant exists with the given email id",
-        success: false
-      })
+        message: "Already a restaurant exists with the given email id",
+        success: false,
+      });
     }
     const salt = await bcrypt.genSalt(10);
-    let secPassword = await bcrypt.hash(restaurantFrontEnd.admin.password, salt);
-    const admin = {...restaurantFrontEnd.admin, password:secPassword}
+    let secPassword = await bcrypt.hash(
+      restaurantFrontEnd.admin.password,
+      salt
+    );
+    const admin = { ...restaurantFrontEnd.admin, password: secPassword };
     const restaurant = new Restaurant({
       name: restaurantFrontEnd.name,
       location: restaurantFrontEnd.location,
       admin: admin,
       parkingAvailable: restaurantFrontEnd.parkingAvailable,
       sections: [],
-      avgCost: restaurantFrontEnd.avgCost
+      avgCost: restaurantFrontEnd.avgCost,
     });
-    await restaurant.save();// save restaurant to DB
+    await restaurant.save(); // save restaurant to DB
     // console.log("Restaurant:",restaurant);
     const resId = restaurant._id;
     console.log("added res ID:", resId);
     res.status(201).json({
       message: "Restaurant added successfully",
       success: true,
-      restaurantId: restaurant._id
-    })
+      restaurantId: restaurant._id,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
       message: "Restaurant addition failed",
-      success: false
-    })
+      success: false,
+    });
   }
-})
+});
 
 app.post("/addRestaurantprevious", async (req, res) => {
-    const body = req.body;
-    // console.log("Add restaurant", body);
-    try {
-      const restaurantFrontEnd = body.restaurant;
-      const restaurant = new Restaurant({
-        name: restaurantFrontEnd.name,
-        location: restaurantFrontEnd.location,
-        admin: restaurantFrontEnd.admin,
-        parkingAvailable: restaurantFrontEnd.parkingAvailable,
-        sections: [],
+  const body = req.body;
+  // console.log("Add restaurant", body);
+  try {
+    const restaurantFrontEnd = body.restaurant;
+    const restaurant = new Restaurant({
+      name: restaurantFrontEnd.name,
+      location: restaurantFrontEnd.location,
+      admin: restaurantFrontEnd.admin,
+      parkingAvailable: restaurantFrontEnd.parkingAvailable,
+      sections: [],
+    });
+    await restaurant.save(); // save restaurant to DB
+    // console.log("Restaurant:",restaurant);
+    const resId = restaurant._id;
+    console.log("added res ID:", resId);
+    const sections = body.sections;
+    await sections.forEach(async (sectionFrontEnd) => {
+      const section = new Section({
+        sectionName: sectionFrontEnd.sectionName,
+        sectionDescription: sectionFrontEnd.sectionDescription,
+        secImg: sectionFrontEnd.secImg,
+        capacity: sectionFrontEnd.capacity,
+        dineinAvailable: sectionFrontEnd.dineinAvailable,
+        autoAcceptBookings: sectionFrontEnd.autoAcceptBookings,
+        cateringAvailable: sectionFrontEnd.cateringAvailable,
+        avgCost: sectionFrontEnd.avgCost,
+        rating: sectionFrontEnd.rating,
+        timing: timeToDateForTimings(sectionFrontEnd.timing),
+        menu: [], // category Ids to be added later
+        reservationCharge: sectionFrontEnd.reservationCharge,
+        restaurantId: resId,
       });
-      await restaurant.save();// save restaurant to DB
-      // console.log("Restaurant:",restaurant);
-      const resId = restaurant._id;
-      console.log("added res ID:", resId);
-      const sections = body.sections;
-      await sections.forEach( async(sectionFrontEnd) => {
-        const section = new Section({
-          sectionName: sectionFrontEnd.sectionName,
-          sectionDescription: sectionFrontEnd.sectionDescription,
-          secImg: sectionFrontEnd.secImg,
-          capacity: sectionFrontEnd.capacity,
-          dineinAvailable: sectionFrontEnd.dineinAvailable,
-          autoAcceptBookings: sectionFrontEnd.autoAcceptBookings,
-          cateringAvailable: sectionFrontEnd.cateringAvailable,
-          avgCost: sectionFrontEnd.avgCost,
-          rating: sectionFrontEnd.rating,
-          timing: timeToDateForTimings(sectionFrontEnd.timing),
-          menu: [],// category Ids to be added later
-          reservationCharge: sectionFrontEnd.reservationCharge,
-          restaurantId: resId,
+      await section.save(); // add section to DB
+      const secId = section._id;
+      console.log("added section : ", secId);
+      const menu = sectionFrontEnd.menu;
+      menu.forEach(async (menuCategoryFrontend) => {
+        const menuCategory = new MenuCategory({
+          categoryName: menuCategoryFrontend.categoryName,
+          sectionId: secId,
         });
-        await section.save();// add section to DB
-        const secId = section._id;
-        console.log("added section : ", secId);
-        const menu = sectionFrontEnd.menu;
-        menu.forEach( async (menuCategoryFrontend) =>{
-          const menuCategory = new MenuCategory({
-            categoryName: menuCategoryFrontend.categoryName,
-            sectionId: secId,
+        await menuCategory.save(); //add menuCategory to DB
+        console.log("added Category:", menuCategory._id);
+        // console.log("Category:", menuCategory);
+        const categoryId = menuCategory._id;
+        menuCategoryFrontend.Items.forEach(async (menuItemFrontEnd) => {
+          const menuItem = new MenuItem({
+            itemName: menuItemFrontEnd.itemName,
+            quantities: menuItemFrontEnd.quantities,
+            menuCategoryId: categoryId,
           });
-          await menuCategory.save();//add menuCategory to DB
-          console.log("added Category:", menuCategory._id);
-          // console.log("Category:", menuCategory);
-          const categoryId = menuCategory._id;
-          menuCategoryFrontend.Items.forEach( async(menuItemFrontEnd) => {
-            const menuItem = new MenuItem({
-              itemName: menuItemFrontEnd.itemName,
-              quantities: menuItemFrontEnd.quantities,
-              menuCategoryId: categoryId,
-            });
 
-            // add menu item to DB
-            await menuItem.save();
-            // add item id to category document in DB
-            console.log("menu Item:", menuItem._id);
-            // console.log("menu Item:", menuItem);
-            menuCategory.Items.push(menuItem._id);
-            await menuCategory.save();
-            console.log( "\n\nitem : ", menuItem.itemName, " added to category : ", menuCategory.categoryName, "\n\n" );
-          })
-          section.menu.push(categoryId);
-          await section.save();
-          console.log( "\n\ncategory:", menuCategory.categoryName, " added to section:", section.sectionName, "\n\n" );
-        })
-        restaurant.sections.push(secId);
-        await restaurant.save();
-        console.log( "\n\nsection:", section.sectionName, " added to restaurant:", restaurant.name, "\n\n" );
-      })
-      console.log("Restaurant saved and updated: from back-end........");
-      return res.status(201).json({
-        message: "Restaurant added successfully",
-        success: true,
-      })
-    } catch (error) {
-      return res.status(500).json({
-        message: "Restaurant not added",
-        success: false
-      })
-    }
+          // add menu item to DB
+          await menuItem.save();
+          // add item id to category document in DB
+          console.log("menu Item:", menuItem._id);
+          // console.log("menu Item:", menuItem);
+          menuCategory.Items.push(menuItem._id);
+          await menuCategory.save();
+          console.log(
+            "\n\nitem : ",
+            menuItem.itemName,
+            " added to category : ",
+            menuCategory.categoryName,
+            "\n\n"
+          );
+        });
+        section.menu.push(categoryId);
+        await section.save();
+        console.log(
+          "\n\ncategory:",
+          menuCategory.categoryName,
+          " added to section:",
+          section.sectionName,
+          "\n\n"
+        );
+      });
+      restaurant.sections.push(secId);
+      await restaurant.save();
+      console.log(
+        "\n\nsection:",
+        section.sectionName,
+        " added to restaurant:",
+        restaurant.name,
+        "\n\n"
+      );
+    });
+    console.log("Restaurant saved and updated: from back-end........");
+    return res.status(201).json({
+      message: "Restaurant added successfully",
+      success: true,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Restaurant not added",
+      success: false,
+    });
   }
-)
+});
 
-app.post("/updateUserLikings/:id", async (req,res) => {
+app.post("/updateUserLikings/:id", async (req, res) => {
   // console.log(req.body);
   try {
-    let userliking = await UserLikings.findOne({userId:req.params.id})
-    if(userliking)
-    {
+    let userliking = await UserLikings.findOne({ userId: req.params.id });
+    if (userliking) {
       // console.log(userliking);
-      if(req.body.operation==="add")
-      {
-        if(userliking[req.body.favType].findIndex(fav => fav.equals(req.body.idToOperateOn))===-1)
-        {
-          userliking[req.body.favType].push(req.body.idToOperateOn)
-        }
-        else
-        {
+      if (req.body.operation === "add") {
+        if (
+          userliking[req.body.favType].findIndex((fav) =>
+            fav.equals(req.body.idToOperateOn)
+          ) === -1
+        ) {
+          userliking[req.body.favType].push(req.body.idToOperateOn);
+        } else {
           res.status(201).json({
-            message:req.body.favType+" already contains!!",
-            success:true,
-            userlikings:userliking
-          })
+            message: req.body.favType + " already contains!!",
+            success: true,
+            userlikings: userliking,
+          });
         }
+      } else if (req.body.operation === "remove") {
+        userliking[req.body.favType] = userliking[req.body.favType].filter(
+          (id) => !id.equals(req.body.idToOperateOn)
+        );
       }
-      else if(req.body.operation==="remove")
-      {
-        userliking[req.body.favType] = userliking[req.body.favType].filter((id) => !(id.equals(req.body.idToOperateOn)))
-      }
-      await userliking.save()
-      if(userliking)
-      {
+      await userliking.save();
+      if (userliking) {
         return res.status(200).json({
-          message:req.body.favType+" updated successfully!!",
-          success:true,
-          userlikings:userliking
-        })
-      }
-      else
-      {
+          message: req.body.favType + " updated successfully!!",
+          success: true,
+          userlikings: userliking,
+        });
+      } else {
         return res.status(500).json({
-          message:req.body.favType+" updation failed!!",
-          success:false
-        })
+          message: req.body.favType + " updation failed!!",
+          success: false,
+        });
       }
-    }
-    else
-    {
+    } else {
       res.status(404).json({
-        message:"User not found!!",
-        success:false
+        message: "User not found!!",
+        success: false,
       });
     }
   } catch (error) {
     console.error(error);
     return res.status(500).json({
-      message:"Error:backend",
-      success:false
+      message: "Error:backend",
+      success: false,
     });
   }
-})
+});
 
+app.get("/deleteMenuCategory/:id", async (req, res) => {
+  try {
+    let menuCategory = await MenuCategory.findById(req.params.id);
+    if (menuCategory) {
+      // let section = await Section.findById(menuCategory.sectionId)
+      // section.menu = section.menu.filter((id,_) => id!==menuCategory._id)
+      // await section.save()
+      Section.findByIdAndUpdate(menuCategory.sectionId , { $pull: { menu: menuCategory._id } } )
+        .then((result) => {
+          console.log( `Removed menu category with ID ${menuCategory._id} from section with ID ${menuCategory.sectionId}.` );
+        })
+        .catch((err) => {
+          console.log("Error removing menu category id from section:", err);
+        });
+      for (let index = 0; index < menuCategory.Items.length; index++) {
+        await MenuItem.findByIdAndDelete(menuCategory.Items[index]);
+      }
+      await MenuCategory.findByIdAndDelete(req.params.id).then(
+        (deletedCategory) => {
+          if (deletedCategory) {
+            return res.status(200).json({
+              message: "Menu Category deleted successfully",
+              success: true,
+            });
+          } else {
+            return res.status(404).json({
+              message: "Menu Category deletion failed",
+              success: false,
+            });
+          }
+        }
+      );
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Error:backend",
+      success: false,
+    });
+  }
+});
+
+app.get("/deleteMenuItem/:id", async (req, res) => {
+  try {
+    let menuItem = await MenuItem.findById(req.params.id);
+    if (menuItem) {
+      MenuCategory.findByIdAndUpdate(menuItem.menuCategoryId , { $pull: { Items: menuItem._id } } )
+        .then((result) => {
+          console.log( `Removed menu item with ID ${menuItem._id} from category with ID ${menuItem.menuCategoryId}.` );
+        })
+        .catch((err) => {
+          console.log("Error removing menu item id from menu category:", err);
+        });
+      await MenuItem.findByIdAndDelete(req.params.id).then(
+        (deletedItem) => {
+          if (deletedItem) {
+            return res.status(200).json({
+              message: "Menu Item deleted successfully",
+              success: true,
+            });
+          } else {
+            return res.status(404).json({
+              message: "Menu Item deletion failed",
+              success: false,
+            });
+          }
+        }
+      );
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Error:backend",
+      success: false,
+    });
+  }
+});
 
 app.post("/signup", async (req, res) => {
   // console.log("body: ", req.body);
@@ -969,9 +1153,9 @@ app.post("/signup", async (req, res) => {
             .then(async (addedUser) => {
               console.log("Added user Id: ", addedUser._id);
               const userLikings = new UserLikings({
-                userId: addedUser._id
-              })
-              await userLikings.save()
+                userId: addedUser._id,
+              });
+              await userLikings.save();
               return res.status(201).json({
                 message: "user created successfully",
                 userId: addedUser._id,
@@ -991,44 +1175,38 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-app.post("/updateUserLikings/addSection/:id", async (req,res) => {
+app.post("/updateUserLikings/addSection/:id", async (req, res) => {
   try {
-    let userliking = await UserLikings.findOne({userId:req.params.id})
-    if(userliking)
-    {
+    let userliking = await UserLikings.findOne({ userId: req.params.id });
+    if (userliking) {
       // console.log(userliking);
-      userliking.favSections.push(req.body.sectionId)
-      await userliking.save()
-      if(userliking)
-      {
+      userliking.favSections.push(req.body.sectionId);
+      await userliking.save();
+      if (userliking) {
         res.status(200).json({
-          message:"Section added to favorites successfully!!",
-          success:true
-        })
-      }
-      else
-      {
+          message: "Section added to favorites successfully!!",
+          success: true,
+        });
+      } else {
         res.status(500).json({
-          message:"Section addition to favorites failed!!",
-          success:false
-        })
+          message: "Section addition to favorites failed!!",
+          success: false,
+        });
       }
-    }
-    else
-    {
+    } else {
       res.status(404).json({
-        message:"User not found!!",
-        success:false
+        message: "User not found!!",
+        success: false,
       });
     }
   } catch (error) {
     console.error(error);
     res.status(500).json({
-      message:"Error:backend",
-      success:false
+      message: "Error:backend",
+      success: false,
     });
   }
-})
+});
 
 app.post("/login", async (req, res) => {
   console.log("backend:", req.body);
@@ -1040,30 +1218,29 @@ app.post("/login", async (req, res) => {
   }
   try {
     const userLogin = await User.findOne({ email: email });
-    if(userLogin)
-    {
-      bcrypt.compare(password, userLogin.password, function(err,result) {
-        if(err)
-        {
-          console.error(err)
-          return res.json({ message:"Error comparing passwords", success: false });
-        }
-        else if(result)
-        {
+    if (userLogin) {
+      bcrypt.compare(password, userLogin.password, function (err, result) {
+        if (err) {
+          console.error(err);
+          return res.json({
+            message: "Error comparing passwords",
+            success: false,
+          });
+        } else if (result) {
           return res.status(200).json({ success: true, user: userLogin });
+        } else {
+          return res.json({
+            message: "Invalid credentials/ Wrong password",
+            success: false,
+          });
         }
-        else{
-          return res.json({ message:"Invalid credentials/ Wrong password", success: false });
-        }
-      })
-    }
-    else
-    {
-      console.log("Backend:User not found")
+      });
+    } else {
+      console.log("Backend:User not found");
       return res.status(500).json({
-        message:"User doesn't exist",
-        success:false
-      })
+        message: "User doesn't exist",
+        success: false,
+      });
     }
   } catch (err) {
     console.log(err);
@@ -1073,37 +1250,43 @@ app.post("/login", async (req, res) => {
 
 app.post("/restaurantLogin", async (req, res) => {
   console.log("backend:", req.body);
-  if(!req.body.email || !req.body.password)
-  {
-    return res.status(400)
-    .json({ err: "missing credentials", success: false })
+  if (!req.body.email || !req.body.password) {
+    return res.status(400).json({ err: "missing credentials", success: false });
   }
   try {
-    const restaurantLogin = await Restaurant.findOne({ "admin.email": req.body.email });
-    if(restaurantLogin)
-    {
-      bcrypt.compare(req.body.password, restaurantLogin.admin.password, function(err,result) {
-        if(err)
-        {
-          console.error(err)
-          return res.status(500).json({ message:"Error comparing passwords", success: false });
+    const restaurantLogin = await Restaurant.findOne({
+      "admin.email": req.body.email,
+    });
+    if (restaurantLogin) {
+      bcrypt.compare(
+        req.body.password,
+        restaurantLogin.admin.password,
+        function (err, result) {
+          if (err) {
+            console.error(err);
+            return res
+              .status(500)
+              .json({ message: "Error comparing passwords", success: false });
+          } else if (result) {
+            return res
+              .status(200)
+              .json({ success: true, restaurantId: restaurantLogin._id });
+          } else {
+            return res
+              .status(500)
+              .json({
+                success: false,
+                message: "Invalid credentials/ Wrong password",
+              });
+          }
         }
-        else if(result)
-        {
-          return res.status(200).json({ success: true, restaurantId: restaurantLogin._id });
-        }
-        else{
-          return res.status(500).json({ success: false, message:"Invalid credentials/ Wrong password" });
-        }
-      })
-    }
-    else
-    {
-      console.log("Backend:Restaurant not found")
+      );
+    } else {
+      console.log("Backend:Restaurant not found");
       return res.status(500).json({
-        message:"Restaurant doesn't exist",
-        success:false
-      })
+        message: "Restaurant doesn't exist",
+        success: false,
+      });
     }
   } catch (err) {
     console.log(err);
@@ -1111,65 +1294,61 @@ app.post("/restaurantLogin", async (req, res) => {
   }
 });
 
-app.post("/setRestaurantPassword", async(req, res) => {
+app.post("/setRestaurantPassword", async (req, res) => {
   // console.log("set restaurant password called");
-  if(!req.body.email || !req.body.password)
-  {
-    return res.status(400)
-    .json({ err: "missing credentials", success: false })
+  if (!req.body.email || !req.body.password) {
+    return res.status(400).json({ err: "missing credentials", success: false });
   }
   try {
-    const restaurantLogin = await Restaurant.findOne({ "admin.email": req.body.email });
-    if(restaurantLogin)//user exists in our DB
-    {
+    const restaurantLogin = await Restaurant.findOne({
+      "admin.email": req.body.email,
+    });
+    if (restaurantLogin) {
+      //user exists in our DB
       const salt = await bcrypt.genSalt(10);
       let secPassword = await bcrypt.hash(req.body.password, salt);
       try {
         const result = await Restaurant.updateOne(
-          {"admin.email": req.body.email},
-          {$set: {"admin.password": secPassword}},
-        )
+          { "admin.email": req.body.email },
+          { $set: { "admin.password": secPassword } }
+        );
         // if(result.modifiedCount>0)
         // {
-          console.log('updated restaurant password');
-          return res.status(200).json({
-            success:true,
-            message:"Updated restaurant password in DB successfully"
-          })
+        console.log("updated restaurant password");
+        return res.status(200).json({
+          success: true,
+          message: "Updated restaurant password in DB successfully",
+        });
         // }
       } catch (error) {
         return res.status(500).json({
-          success:false,
-          message:"failed to change the restaurant password"
-        })
+          success: false,
+          message: "failed to change the restaurant password",
+        });
       }
-    }
-    else
-    {
-      console.log("Backend:Restaurant not found")
+    } else {
+      console.log("Backend:Restaurant not found");
       return res.status(500).json({
-        message:"Restaurant with given email not registered, please create a restaurant",
-        success:false
-      })
+        message:
+          "Restaurant with given email not registered, please create a restaurant",
+        success: false,
+      });
     }
   } catch (err) {
     console.log(err);
-    res.json({ success: false, error:err });
+    res.json({ success: false, error: err });
   }
-})
+});
 
-
-app.post("/setUserPassword", async(req, res) => {
+app.post("/setUserPassword", async (req, res) => {
   // console.log("set user password called");
-  if(!req.body.email || !req.body.password)
-  {
-    return res.status(400)
-    .json({ err: "missing credentials", success: false })
+  if (!req.body.email || !req.body.password) {
+    return res.status(400).json({ err: "missing credentials", success: false });
   }
   try {
     const userLogin = await User.findOne({ email: req.body.email });
-    if(userLogin)//user exists in our DB
-    {
+    if (userLogin) {
+      //user exists in our DB
       // code for comparing password with stored password
       // bcrypt.compare(password, userLogin.password, function(err,result) {
       //   if(err)
@@ -1186,346 +1365,322 @@ app.post("/setUserPassword", async(req, res) => {
       let secPassword = await bcrypt.hash(req.body.password, salt);
       try {
         const result = await User.updateOne(
-          {email: req.body.email},
-          {$set: {password: secPassword}},
-        )
+          { email: req.body.email },
+          { $set: { password: secPassword } }
+        );
         // if(result.modifiedCount>0)
         // {
-          console.log('updated user password');
-          return res.status(200).json({
-            success:true,
-            message:"Updated password in DB successfully"
-          })
+        console.log("updated user password");
+        return res.status(200).json({
+          success: true,
+          message: "Updated password in DB successfully",
+        });
         // }
       } catch (error) {
         return res.status(500).json({
-          success:false,
-          message:"failed to change the password"
-        })
+          success: false,
+          message: "failed to change the password",
+        });
       }
-    }
-    else
-    {
-      console.log("Backend:User not found")
+    } else {
+      console.log("Backend:User not found");
       return res.status(500).json({
-        message:"Email not registered, please sign-in to create an account",
-        success:false
-      })
+        message: "Email not registered, please sign-in to create an account",
+        success: false,
+      });
     }
   } catch (err) {
     console.log(err);
-    res.json({ success: false, error:err });
+    res.json({ success: false, error: err });
   }
-})
+});
 
 app.post("/retrieve/user", async (req, res) => {
   console.log("backend called for user retrieval:", req.body);
 });
 
-const DineinBookings = require("./models/DineinBookingSchema")
+const DineinBookings = require("./models/DineinBookingSchema");
 
-app.post("/bookDineinSection", async(req,res) => {
+app.post("/bookDineinSection", async (req, res) => {
   try {
-    const booking = req.body
-    if(booking.guests.length<1)
-    {
+    const booking = req.body;
+    if (booking.guests.length < 1) {
       return res.status(500).json({
-        message:"No. of guests should be greater than one!!!",
-        success:false
-      })
+        message: "No. of guests should be greater than one!!!",
+        success: false,
+      });
     }
-    if(!booking.reservationTime)//!booking.userId && !booking.sectionId)
-    {
+    if (!booking.reservationTime) {
+      //!booking.userId && !booking.sectionId)
       return res.status(500).json({
-        message:"ReservationTime not selected",
-        success:false
-      })
+        message: "ReservationTime not selected",
+        success: false,
+      });
     }
-    const bookingDBEntry = new DineinBookings(booking)
-    await bookingDBEntry.save()
-    const user = await User.findById(booking.userId)
-    if(user)
-    {
-      user.bookings.push(bookingDBEntry._id)
-      await user.save()
-      const section = await Section.findById(booking.sectionId)
-      if(section)
-      {
-        const restaurant = await Restaurant.findById(section.restaurantId)
-        if(restaurant)
-        {
-          
+    const bookingDBEntry = new DineinBookings(booking);
+    await bookingDBEntry.save();
+    const user = await User.findById(booking.userId);
+    if (user) {
+      user.bookings.push(bookingDBEntry._id);
+      await user.save();
+      const section = await Section.findById(booking.sectionId);
+      if (section) {
+        const restaurant = await Restaurant.findById(section.restaurantId);
+        if (restaurant) {
           return res.status(201).json({
-            message:"dinein booked successfully",
-            success:true,
-            booking:bookingDBEntry,
-            restaurant:restaurant,
-            section:section
-          })
-        }
-        else
-        {
+            message: "dinein booked successfully",
+            success: true,
+            booking: bookingDBEntry,
+            restaurant: restaurant,
+            section: section,
+          });
+        } else {
           return res.status(500).json({
-            message:"Restaurant not found: booking failed",
-            success:false
-          })
+            message: "Restaurant not found: booking failed",
+            success: false,
+          });
         }
-      }
-      else
-      {
+      } else {
         return res.status(500).json({
-          message:"Section not found: booking failed",
-          success:false
-        })
+          message: "Section not found: booking failed",
+          success: false,
+        });
       }
-    }
-    else
-    {
+    } else {
       return res.status(500).json({
-        message:"User not found: booking failed",
-        success:false
-      })
+        message: "User not found: booking failed",
+        success: false,
+      });
     }
   } catch (error) {
     return res.status(500).json({
-      message:"Booking failed",
-      success:false
-    })
+      message: "Booking failed",
+      success: false,
+    });
   }
-})
+});
 
-app.post("/updateDineinBookingStatus/:id", async(req,res) => {
+app.post("/updateDineinBookingStatus/:id", async (req, res) => {
   try {
-    const bookingId = req.params.id
-    const status = req.body.status
+    const bookingId = req.params.id;
+    const status = req.body.status;
     try {
       const result = await DineinBookings.updateOne(
-        {"_id": bookingId},
-        {$set: {"status": status}},
-      )
+        { _id: bookingId },
+        { $set: { status: status } }
+      );
       // if(result.modifiedCount>0)
       // {
-        console.log('updated booking status');
-        return res.status(200).json({
-          success:true,
-          message:"Updated booking status in DB successfully"
-        })
+      console.log("updated booking status");
+      return res.status(200).json({
+        success: true,
+        message: "Updated booking status in DB successfully",
+      });
       // }
     } catch (error) {
       return res.status(500).json({
-        success:false,
-        message:"failed to change the booking status"
-      })
+        success: false,
+        message: "failed to change the booking status",
+      });
     }
-    
   } catch (error) {
     return res.status(500).json({
-      message:"Error",
-      success:false
-    })
+      message: "Error",
+      success: false,
+    });
   }
-})
+});
 
-app.post("/addUserFavCuisine/:id", async(req,res) => {
+app.post("/addUserFavCuisine/:id", async (req, res) => {
   try {
     console.log(req.body);
-    const userId = req.params.id
+    const userId = req.params.id;
     try {
       const result = await UserLikings.updateOne(
         { userId: userId },
-        { $addToSet: { favCuisines: {$each :req.body.cuisines} } },
-      )
-      console.log('added user fav cuisines');
+        { $addToSet: { favCuisines: { $each: req.body.cuisines } } }
+      );
+      console.log("added user fav cuisines");
       return res.status(200).json({
-        success:true,
-        message:"added user favcuisines in DB successfully"
-      })
+        success: true,
+        message: "added user favcuisines in DB successfully",
+      });
     } catch (error) {
       console.log(error);
       return res.status(500).json({
-        message:"adding favCuisines failed",
-        success:false
-      })
+        message: "adding favCuisines failed",
+        success: false,
+      });
     }
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      message:"adding favCuisines failed",
-      success:false
-    })
+      message: "adding favCuisines failed",
+      success: false,
+    });
   }
-})
+});
 
-app.post("/addReview",async (req,res) => {
+app.post("/addReview", async (req, res) => {
   try {
-    const review = req.body
-    if(!review.rating || !review.restaurantRating)
-    {
+    const review = req.body;
+    if (!review.rating || !review.restaurantRating) {
       return res.status(500).json({
-        message:"Section rating or Restaurant rating missing",
-        success:false
-      })
+        message: "Section rating or Restaurant rating missing",
+        success: false,
+      });
     }
-    const reviewDbEntry = new Review(review)
-    reviewDbEntry.save()
-    .then(async (addedReview) => {
-      console.log("Backend: New review",addedReview._id,"added successfully");
-      const section = await Section.findById(review.sectionId)
-      if(section)
-      {
-        section.rating = ((section.rating*(section.reviews.length+section.ratings.length))+review.rating)/(section.reviews.length+section.ratings.length+1)
-        if(review.review)
-        {
-          // section.noOfReviews = section.noOfReviews+1
-          section.reviews.push(addedReview._id)
-          // await section.save()
+    const reviewDbEntry = new Review(review);
+    reviewDbEntry
+      .save()
+      .then(async (addedReview) => {
+        console.log(
+          "Backend: New review",
+          addedReview._id,
+          "added successfully"
+        );
+        const section = await Section.findById(review.sectionId);
+        if (section) {
+          section.rating =
+            (section.rating *
+              (section.reviews.length + section.ratings.length) +
+              review.rating) /
+            (section.reviews.length + section.ratings.length + 1);
+          if (review.review) {
+            // section.noOfReviews = section.noOfReviews+1
+            section.reviews.push(addedReview._id);
+            // await section.save()
+          } else {
+            section.ratings.push(addedReview._id);
+          }
+          await section.save();
+          const rId = section.restaurantId;
+          const restaurant = await Restaurant.findById(rId);
+          if (restaurant) {
+            restaurant["rating"] =
+              (restaurant["rating"] * restaurant["noOfRatings"] +
+                review.restaurantRating) /
+              (restaurant["noOfRatings"] + 1);
+            restaurant["noOfRatings"] = restaurant["noOfRatings"] + 1;
+            await restaurant.save();
+          }
         }
-        else
-        {
-          section.ratings.push(addedReview._id)
-        }
-        await section.save()
-        const rId = section.restaurantId
-        const restaurant = await Restaurant.findById(rId)
-        if(restaurant)
-        {
-          restaurant["rating"] = (restaurant["rating"]*restaurant["noOfRatings"]+review.restaurantRating)/(restaurant["noOfRatings"]+1)
-          restaurant["noOfRatings"]=restaurant["noOfRatings"]+1
-          await restaurant.save()
-        }
-      }
-      return res.status(201).json({
-        message:"Review added succesfully",
-        success:true,
-        review:addedReview
+        return res.status(201).json({
+          message: "Review added succesfully",
+          success: true,
+          review: addedReview,
+        });
       })
-    })
-    .catch(err => {
-      console.error(err);
-      return res.status(500).json({
-        message:"Review addition failed",
-        success:false,
-        error:err
-      })
-    })
+      .catch((err) => {
+        console.error(err);
+        return res.status(500).json({
+          message: "Review addition failed",
+          success: false,
+          error: err,
+        });
+      });
   } catch (error) {
     return res.status(500).json({
-      message:"Review addition failed",
-      success:false
-    })
+      message: "Review addition failed",
+      success: false,
+    });
   }
-})
+});
 
-app.get("/getBookingSummary/:id", async(req,res) => {
+app.get("/getBookingSummary/:id", async (req, res) => {
   try {
-    const bookingDBEntry = await DineinBookings.findById(req.params.id)
-    if(bookingDBEntry)
-    {
-      const section = await Section.findById(bookingDBEntry.sectionId)
-      if(section)
-      {
-        const restaurant = await Restaurant.findById(section.restaurantId)
-        if(restaurant)
-        {
+    const bookingDBEntry = await DineinBookings.findById(req.params.id);
+    if (bookingDBEntry) {
+      const section = await Section.findById(bookingDBEntry.sectionId);
+      if (section) {
+        const restaurant = await Restaurant.findById(section.restaurantId);
+        if (restaurant) {
           return res.status(201).json({
-            message:"Booking retrieved successfully",
-            success:true,
-            booking:bookingDBEntry,
-            restaurant:restaurant,
-            section:section
-          })
-        }
-        else
-        {
+            message: "Booking retrieved successfully",
+            success: true,
+            booking: bookingDBEntry,
+            restaurant: restaurant,
+            section: section,
+          });
+        } else {
           return res.status(500).json({
-            message:"Restaurant not found for this booking",
-            success:false
-          })
+            message: "Restaurant not found for this booking",
+            success: false,
+          });
         }
-      }
-      else
-      {
+      } else {
         return res.status(500).json({
-          message:"Section not found for this booking",
-          success:false
-        })
+          message: "Section not found for this booking",
+          success: false,
+        });
       }
-    }
-    else
-    {
+    } else {
       return res.status(404).json({
-        message:"Booking not found in DB",
-        success:false
-      })
+        message: "Booking not found in DB",
+        success: false,
+      });
     }
   } catch (error) {
     console.error(error);
     return res.status(500).json({
-      message:"Booking not found: error occured",
-      success:false,
-      error:error
-    })
+      message: "Booking not found: error occured",
+      success: false,
+      error: error,
+    });
   }
-})
+});
 
-app.get("/getReviews/:id", async(req,res) => {
+app.get("/getReviews/:id", async (req, res) => {
   try {
-    const reviews = await Review.find({sectionId:req.params.id})//retrieve reviews using section Id
-    if(reviews.length!==0)
-    {
+    const reviews = await Review.find({ sectionId: req.params.id }); //retrieve reviews using section Id
+    if (reviews.length !== 0) {
       // console.log("Backend: found reviews",reviews);
       return res.status(200).json({
-        message:"Reviews found",
-        success:true,
-        reviews:reviews
-      })
-    }
-    else
-    {
+        message: "Reviews found",
+        success: true,
+        reviews: reviews,
+      });
+    } else {
       return res.status(500).json({
-        message:"No Reviews found",
-        success:false
-      })
+        message: "No Reviews found",
+        success: false,
+      });
     }
   } catch (error) {
-    console.error(error)
+    console.error(error);
     return res.status(500).json({
-      message:"Reviews retrieval failed",
-      success:false
-    })
+      message: "Reviews retrieval failed",
+      success: false,
+    });
   }
-})
+});
 
-app.get("/getReview/:id", async(req,res) => {
+app.get("/getReview/:id", async (req, res) => {
   try {
-    let review = await Review.findById(req.params.id)
-    if(review)
-    {
+    let review = await Review.findById(req.params.id);
+    if (review) {
       // console.log("Backend: found review",review);
-      const user = await User.findById(review.userId)
-      review = {...review._doc, user:user.fname+" "+user.lname}
+      const user = await User.findById(review.userId);
+      review = { ...review._doc, user: user.fname + " " + user.lname };
       return res.status(200).json({
-        message:"Reviews found",
-        success:true,
-        review:review
-      })
-    }
-    else
-    {
+        message: "Reviews found",
+        success: true,
+        review: review,
+      });
+    } else {
       return res.status(500).json({
-        message:"No Reviews found",
-        success:false
-      })
+        message: "No Reviews found",
+        success: false,
+      });
     }
   } catch (error) {
-    console.error(error)
+    console.error(error);
     return res.status(500).json({
-      message:"Reviews retrieval failed",
-      success:false
-    })
+      message: "Reviews retrieval failed",
+      success: false,
+    });
   }
-})
-
+});
 
 app.listen(port, () => {
   console.log(`server is connected to ${port}`);
