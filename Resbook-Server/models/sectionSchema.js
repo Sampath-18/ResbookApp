@@ -107,7 +107,22 @@ const sectionSchema = new mongoose.Schema({
   }],
   searchTags:[{
     type:String
-  }]
+  }],
+  OpenTime:{
+    type:Date,
+    required:false,
+    default:Date.now(),
+  },
+  CloseTime:{
+    type:Date,
+    required:false,
+    default:Date.now(),
+  },
+  currentStatus:{
+      type:String,
+      default:"Open",
+      enum:["Open","Close"]
+  }
 });
 
 module.exports = mongoose.model("sectionSchema", sectionSchema, "Section");
