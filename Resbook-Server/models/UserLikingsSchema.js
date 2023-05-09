@@ -7,14 +7,6 @@ const userLikingSchema = new mongoose.Schema({
         required:true
     },
     favMenuItems: 
-    // {
-    //     type: [{
-    //       type: mongoose.Schema.Types.ObjectId,
-    //       ref: 'MenuItem'
-    //     }],
-    //     unique: true,
-    //     // required: true
-    //   },
     [{
         type: mongoose.Schema.Types.ObjectId,
         ref:'MenuItem',
@@ -42,7 +34,27 @@ const userLikingSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref:'Section',
         required:true
-    }]
+    }],
+    foodType:{
+        type:String,
+        default:'Both',
+        enum:['Veg','Non-Veg','Both']
+    },
+    drinking:{
+        type:String,
+        default:'Non-Drinker',
+        enum:['Drinker','Non-Drinker']
+    },
+    smoking:{
+        type:String,
+        default:'Non-Smoker',
+        enum:['Smoker','Non-Smoker'],
+    },
+    preference:{
+        type:String,
+        default:'Quality',
+        enum:['Budget','Quality']
+    }
 })
 
 module.exports = mongoose.model("userLikingSchema",userLikingSchema,"UserLikings")

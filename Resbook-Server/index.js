@@ -1177,6 +1177,7 @@ app.post("/updateUserLikings/:id", async (req, res) => {
     if (req.body.operation)
       userliking = await UserLikings.findOneAndUpdate(
         { userId: req.params.id },
+        // req.body.operation==='$push' ? {$addToSet: { favCuisines: req.body.id }}:
         { [req.body.operation]: { [req.body.favType]: req.body.id } },
         { new: true }
       );
@@ -1184,27 +1185,6 @@ app.post("/updateUserLikings/:id", async (req, res) => {
 
     // let userliking = await UserLikings.findOne({ userId: req.params.id });
     if (userliking) {
-      // console.log(userliking);
-      // if (req.body.operation === "add") {
-      //   if (
-      //     userliking[req.body.favType].findIndex((fav) =>
-      //       fav.equals(req.body.idToOperateOn)
-      //     ) === -1
-      //   ) {
-      //     userliking[req.body.favType].push(req.body.idToOperateOn);
-      //   } else {
-      //     res.status(201).json({
-      //       message: req.body.favType + " already contains!!",
-      //       success: true,
-      //       userlikings: userliking,
-      //     });
-      //   }
-      // } else if (req.body.operation === "remove") {
-      //   userliking[req.body.favType] = userliking[req.body.favType].filter(
-      //     (id) => !id.equals(req.body.idToOperateOn)
-      //   );
-      // }
-      // await userliking.save();
       if (userliking) {
         return res.status(200).json({
           message: req.body.favType + " updated successfully!!",
@@ -1750,19 +1730,26 @@ app.post("/updateDineinBooking/:id", async (req, res) => {
   }
 });
 
-app.post("/addUserFavCuisine/:id", async (req, res) => {
+app.post("/addUserFavorites/:id", async (req, res) => {
   try {
     console.log(req.body);
     const userId = req.params.id;
     try {
-      const result = await UserLikings.updateOne(
+      let query={}
+      if(req.body.cuisines)
+        query={$addToSet: { favCuisines: { $each: req.body.cuisines } }}
+      if(req.body.preferences)
+        query={...query,...req.body.preferences}
+      const result = await UserLikings.findOneAndUpdate(
         { userId: userId },
-        { $addToSet: { favCuisines: { $each: req.body.cuisines } } }
+        query,
+        {new:true}
       );
       console.log("added user fav cuisines");
       return res.status(200).json({
         success: true,
         message: "added user favcuisines in DB successfully",
+        userlikings: result
       });
     } catch (error) {
       console.log(error);
