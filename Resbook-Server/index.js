@@ -269,8 +269,8 @@ app.get("/getSection/:id", async (req, res) => {
 app.post("/getSectionsBookings", async (req, res) => {
   try {
     // console.log(req.body);
-    const sectionId = req.params.id;
-    const bookings = await DineinBookings.find({
+    // const sectionId = req.params.id;
+    let bookings = await DineinBookings.find({
       sectionId: { $in: req.body.sectionIds },
       reservationTime: {
         $gte: new Date(req.body.startDate),
@@ -278,7 +278,6 @@ app.post("/getSectionsBookings", async (req, res) => {
       },
     });
     if (bookings && bookings.length > 0) {
-      // console.log("Backend:Bookings found");
       // console.log(bookings);
       res.status(201).json({
         message: "Section found",
@@ -291,6 +290,36 @@ app.post("/getSectionsBookings", async (req, res) => {
         success: false,
       });
     }
+    // const sections = await Section.find({ _id: { $in: req.body.sectionIds } });
+    // if (sections && sections.length > 0) {
+    //   let sectionDict = {};
+    //   for (const i = 0; i < sections.length; i++) {
+    //     sectionDict[sections[i]._id] = sections[i].sectionName;
+    //   }
+    //   console.log(bookings);
+    //   if (bookings && bookings.length > 0) {
+    //     console.log(bookings);
+    //     bookings = bookings.map((booking, _) => {
+    //       return { ...booking, sectionName: sectionDict[booking.sectionId] };
+    //     });
+    //     res.status(201).json({
+    //       message: "Section found",
+    //       success: true,
+    //       bookings: bookings,
+    //     });
+    //   } else {
+    //     res.status(404).json({
+    //       message: "No Bookings or some error",
+    //       success: false,
+    //     });
+    //   }
+    // } else {
+    //   return res.status(500).json({
+    //     message: "Sections not found",
+    //     success: false,
+    //     error: error,
+    //   });
+    // }
   } catch (error) {
     return res.status(500).json({
       message: "Error",
@@ -524,12 +553,14 @@ app.post("/updateRestaurant/addSection/:id", async (req, res) => {
         cateringAvailable: sectionFrontEnd.cateringAvailable,
         avgCost: sectionFrontEnd.avgCost,
         // rating: 0, initially no ratings
-        timing: timeToDateForTimings(sectionFrontEnd.timing),
+        // timing: timeToDateForTimings(sectionFrontEnd.timing),
         menu: [], // category Ids to be added later
         reservationCharge: sectionFrontEnd.reservationCharge,
         restaurantId: req.params.id,
         cuisines: sectionFrontEnd.cuisines.split(","),
         searchTags: sectionFrontEnd.searchTags.split(","),
+        OpenTime: new Date( new Date().toDateString() + " " + sectionFrontEnd.OpenTime ),
+        CloseTime: new Date( new Date().toDateString() + " " + sectionFrontEnd.CloseTime ),
       });
       await section.save(); // add section to DB
       const secId = section._id;
@@ -711,6 +742,105 @@ app.post("/updateMenuItem/:id", async (req, res) => {
     console.error(error);
     return res.status(500).json({
       message: "Menu Item updation failed(caught some error)",
+      success: false,
+      error: error,
+    });
+  }
+});
+
+app.post("/updateRestaurantDetails/:id", async (req, res) => {
+  try {
+    const options = { new: true };
+    const restaurantId = req.params.id;
+    const restaurant = req.body;
+    // console.log(item);
+    const result = await Restaurant.findOneAndUpdate(
+      { _id: restaurantId },
+      { $set: restaurant },
+      options
+    );
+    if (result) {
+      // if update is successful
+      return res.status(201).json({
+        message: "Restaurant updated successfully",
+        success: true,
+      });
+    } else {
+      return res.status(501).json({
+        message: "Restaurant updation failed(maybe not found)",
+        success: false,
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Restaurant updation failed(caught some error)",
+      success: false,
+      error: error,
+    });
+  }
+});
+
+app.post("/updateSectionDetails/:id", async (req, res) => {
+  try {
+    const options = { new: true };
+    const sectionId = req.params.id;
+    const section = req.body;
+    // console.log(item);
+    const result = await Section.findOneAndUpdate(
+      { _id: sectionId },
+      { $set: section },
+      options
+    );
+    if (result) {
+      // if update is successful
+      return res.status(201).json({
+        message: "Section updated successfully",
+        success: true,
+      });
+    } else {
+      return res.status(501).json({
+        message: "Section updation failed(maybe not found)",
+        success: false,
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Section updation failed(caught some error)",
+      success: false,
+      error: error,
+    });
+  }
+});
+
+app.post("/updateMenuCategory/:id", async (req, res) => {
+  try {
+    const options = { new: true };
+    const menuCategoryId = req.params.id;
+    const category = req.body;
+    // console.log(item);
+    const result = await MenuCategory.findOneAndUpdate(
+      { _id: menuCategoryId },
+      { $set: category },
+      options
+    );
+    if (result) {
+      // if update is successful
+      return res.status(201).json({
+        message: "Menu Category updated successfully",
+        success: true,
+      });
+    } else {
+      return res.status(501).json({
+        message: "Menu Category updation failed(maybe not found)",
+        success: false,
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Menu Category updation failed(caught some error)",
       success: false,
       error: error,
     });
@@ -1045,12 +1175,13 @@ app.get("/deleteMenuCategory/:id", async (req, res) => {
   try {
     let menuCategory = await MenuCategory.findById(req.params.id);
     if (menuCategory) {
-      // let section = await Section.findById(menuCategory.sectionId)
-      // section.menu = section.menu.filter((id,_) => id!==menuCategory._id)
-      // await section.save()
-      Section.findByIdAndUpdate(menuCategory.sectionId , { $pull: { menu: menuCategory._id } } )
+      Section.findByIdAndUpdate(menuCategory.sectionId, {
+        $pull: { menu: menuCategory._id },
+      })
         .then((result) => {
-          console.log( `Removed menu category with ID ${menuCategory._id} from section with ID ${menuCategory.sectionId}.` );
+          console.log(
+            `Removed menu category with ID ${menuCategory._id} from section with ID ${menuCategory.sectionId}.`
+          );
         })
         .catch((err) => {
           console.log("Error removing menu category id from section:", err);
@@ -1083,32 +1214,87 @@ app.get("/deleteMenuCategory/:id", async (req, res) => {
   }
 });
 
-app.get("/deleteMenuItem/:id", async (req, res) => {
+app.get("/deleteSection/:id", async (req, res) => {
   try {
-    let menuItem = await MenuItem.findById(req.params.id);
-    if (menuItem) {
-      MenuCategory.findByIdAndUpdate(menuItem.menuCategoryId , { $pull: { Items: menuItem._id } } )
+    let section = await Section.findById(req.params.id);
+    if (section) {
+      //remove section id from restaurant object
+      Restaurant.findByIdAndUpdate(section.restaurantId, {
+        $pull: { sections: section._id },
+      })
         .then((result) => {
-          console.log( `Removed menu item with ID ${menuItem._id} from category with ID ${menuItem.menuCategoryId}.` );
+          console.log(
+            `Removed section with ID ${section._id} from Restaurant with ID ${section.restaurantId}.`
+          );
         })
         .catch((err) => {
-          console.log("Error removing menu item id from menu category:", err);
+          console.log("Error removing section id from Restaurant:", err);
         });
-      await MenuItem.findByIdAndDelete(req.params.id).then(
-        (deletedItem) => {
-          if (deletedItem) {
+      for (let categoryIndex = 0; categoryIndex < section.menu.length; categoryIndex++) {
+        const category=await MenuCategory.findById(section.menu[categoryIndex])
+        if(category)
+        {
+          // deleting all th emenu items
+          for (let itemIndex = 0; itemIndex < category.Items.length; itemIndex++) {
+            await MenuItem.findByIdAndDelete(category.Items[itemIndex]);
+          }
+        }
+        await MenuCategory.findByIdAndDelete(section.menu[categoryIndex]);
+      }
+      //remove section from table
+      await Section.findByIdAndDelete(req.params.id).then(
+        (deletedSection) => {
+          if (deletedSection) {
             return res.status(200).json({
-              message: "Menu Item deleted successfully",
+              message: "Section deleted successfully",
               success: true,
             });
           } else {
             return res.status(404).json({
-              message: "Menu Item deletion failed",
+              message: "Section deletion failed",
               success: false,
             });
           }
         }
       );
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Error:backend",
+      success: false,
+    });
+  }
+});
+
+app.get("/deleteMenuItem/:id", async (req, res) => {
+  try {
+    let menuItem = await MenuItem.findById(req.params.id);
+    if (menuItem) {
+      MenuCategory.findByIdAndUpdate(menuItem.menuCategoryId, {
+        $pull: { Items: menuItem._id },
+      })
+        .then((result) => {
+          console.log(
+            `Removed menu item with ID ${menuItem._id} from category with ID ${menuItem.menuCategoryId}.`
+          );
+        })
+        .catch((err) => {
+          console.log("Error removing menu item id from menu category:", err);
+        });
+      await MenuItem.findByIdAndDelete(req.params.id).then((deletedItem) => {
+        if (deletedItem) {
+          return res.status(200).json({
+            message: "Menu Item deleted successfully",
+            success: true,
+          });
+        } else {
+          return res.status(404).json({
+            message: "Menu Item deletion failed",
+            success: false,
+          });
+        }
+      });
     }
   } catch (error) {
     console.error(error);
@@ -1272,12 +1458,10 @@ app.post("/restaurantLogin", async (req, res) => {
               .status(200)
               .json({ success: true, restaurantId: restaurantLogin._id });
           } else {
-            return res
-              .status(500)
-              .json({
-                success: false,
-                message: "Invalid credentials/ Wrong password",
-              });
+            return res.status(500).json({
+              success: false,
+              message: "Invalid credentials/ Wrong password",
+            });
           }
         }
       );
