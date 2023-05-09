@@ -8,6 +8,9 @@ const Restaurant = require("./models/restaurantSchema");
 const Section = require("./models/sectionSchema");
 const Review = require("./models/ReviewSchema");
 const UserLikings = require("./models/UserLikingsSchema");
+const { ObjectId } = require("bson");
+
+// const ObjectID = require('mongodb').ObjectID;
 // console.log(User);
 const cors = require("cors");
 // const bodyParser = require('body-parser');
@@ -41,6 +44,14 @@ app.use(express.urlencoded({ extended: false }));
 app.get("/", (req, res) => {
   res.send("<h1>namaste</h1>");
 });
+
+const updateDineinBookingStatus = async () => {
+  await DineinBookings.updateMany(
+    { reservationTime: { $lte: new Date() }, status: "Booked-Open" },
+    { $set: { status: "Booked-Closed" } }
+    // { new: true }
+  );
+};
 
 const bcrypt = require("bcryptjs");
 
@@ -182,9 +193,11 @@ app.get("/getUser/:id", async (req, res) => {
   }
 });
 
-app.get("/getRestaurants", async (req, res) => {
+// get restaurant given Ids
+app.post("/getRestaurantWithIds", async (req, res) => {
   try {
-    const restaurants = await Restaurant.find({});
+    const restaurantIds = req.body.restaurantIds;
+    const restaurants = await Restaurant.find({ _id: { $in: restaurantIds } });
     if (restaurants) {
       console.log("Back-end: Restaurants found");
       return res.status(201).json({
@@ -207,15 +220,9 @@ app.get("/getRestaurants", async (req, res) => {
   }
 });
 
-app.get("/getSelectedRestaurants", async (req, res) => {
-  //pass restaurant ids in req.body
+app.get("/getRestaurants", async (req, res) => {
   try {
-    let ids = [];
-    for (const id of req.body.ids) {
-      ids.push(new mongoose.Types.ObjectId(id));
-    }
-    console.log(ids);
-    const restaurants = await Restaurant.find({ _id: { $in: ids } });
+    const restaurants = await Restaurant.find({});
     if (restaurants) {
       console.log("Back-end: Restaurants found");
       return res.status(201).json({
@@ -230,7 +237,6 @@ app.get("/getSelectedRestaurants", async (req, res) => {
       });
     }
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       message: "Error",
       success: false,
@@ -270,6 +276,7 @@ app.post("/getSectionsBookings", async (req, res) => {
   try {
     // console.log(req.body);
     // const sectionId = req.params.id;
+    await updateDineinBookingStatus();
     let bookings = await DineinBookings.find({
       sectionId: { $in: req.body.sectionIds },
       reservationTime: {
@@ -559,8 +566,12 @@ app.post("/updateRestaurant/addSection/:id", async (req, res) => {
         restaurantId: req.params.id,
         cuisines: sectionFrontEnd.cuisines.split(","),
         searchTags: sectionFrontEnd.searchTags.split(","),
-        OpenTime: new Date( new Date().toDateString() + " " + sectionFrontEnd.OpenTime ),
-        CloseTime: new Date( new Date().toDateString() + " " + sectionFrontEnd.CloseTime ),
+        OpenTime: new Date(
+          new Date().toDateString() + " " + sectionFrontEnd.OpenTime
+        ),
+        CloseTime: new Date(
+          new Date().toDateString() + " " + sectionFrontEnd.CloseTime
+        ),
       });
       await section.save(); // add section to DB
       const secId = section._id;
@@ -742,6 +753,41 @@ app.post("/updateMenuItem/:id", async (req, res) => {
     console.error(error);
     return res.status(500).json({
       message: "Menu Item updation failed(caught some error)",
+      success: false,
+      error: error,
+    });
+  }
+});
+
+app.post("/updateUser/:id", async (req, res) => {
+  try {
+    const options = { new: true };
+    const userId = req.params.id;
+    const user = req.body;
+    // console.log(item);
+    const result = await User.findOneAndUpdate(
+      { _id: userId },
+      { $set: user },
+      options
+    );
+    if (result) {
+      // if update is successful
+      console.log(result);
+      return res.status(201).json({
+        message: "User updated successfully",
+        success: true,
+        user: result,
+      });
+    } else {
+      return res.status(501).json({
+        message: "User updation failed(maybe not found)",
+        success: false,
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "User updation failed(caught some error)",
       success: false,
       error: error,
     });
@@ -1118,32 +1164,27 @@ app.post("/addRestaurantprevious", async (req, res) => {
   }
 });
 
+// pass userId to update likings, in req.body pass
+// operation type:"$pull","$push"
+// favType: "favRestaurants","savedRestaurants"
+// ids: ids/ObjectIds to remove/add into the favType array in the likings object
 app.post("/updateUserLikings/:id", async (req, res) => {
   // console.log(req.body);
   try {
-    let userliking = await UserLikings.findOne({ userId: req.params.id });
+    let userliking = null;
+    // const ids = req.body.ids.map((id) => new ObjectId(id))
+    // console.log({ [req.body.operation]: { [req.body.favType]: req.body.ids } });
+    if (req.body.operation)
+      userliking = await UserLikings.findOneAndUpdate(
+        { userId: req.params.id },
+        // req.body.operation==='$push' ? {$addToSet: { favCuisines: req.body.id }}:
+        { [req.body.operation]: { [req.body.favType]: req.body.id } },
+        { new: true }
+      );
+    // userliking = await UserLikings.findOneAndUpdate( { userId: req.params.id }, { $pull: { [req.body.favType]: req.body.id } }, { new: true } );
+
+    // let userliking = await UserLikings.findOne({ userId: req.params.id });
     if (userliking) {
-      // console.log(userliking);
-      if (req.body.operation === "add") {
-        if (
-          userliking[req.body.favType].findIndex((fav) =>
-            fav.equals(req.body.idToOperateOn)
-          ) === -1
-        ) {
-          userliking[req.body.favType].push(req.body.idToOperateOn);
-        } else {
-          res.status(201).json({
-            message: req.body.favType + " already contains!!",
-            success: true,
-            userlikings: userliking,
-          });
-        }
-      } else if (req.body.operation === "remove") {
-        userliking[req.body.favType] = userliking[req.body.favType].filter(
-          (id) => !id.equals(req.body.idToOperateOn)
-        );
-      }
-      await userliking.save();
       if (userliking) {
         return res.status(200).json({
           message: req.body.favType + " updated successfully!!",
@@ -1176,7 +1217,7 @@ app.get("/deleteMenuCategory/:id", async (req, res) => {
     let menuCategory = await MenuCategory.findById(req.params.id);
     if (menuCategory) {
       Section.findByIdAndUpdate(menuCategory.sectionId, {
-        $pull: { menu: menuCategory._id },
+        $pull: { menu: { $in: menuCategory._id } },
       })
         .then((result) => {
           console.log(
@@ -1230,33 +1271,40 @@ app.get("/deleteSection/:id", async (req, res) => {
         .catch((err) => {
           console.log("Error removing section id from Restaurant:", err);
         });
-      for (let categoryIndex = 0; categoryIndex < section.menu.length; categoryIndex++) {
-        const category=await MenuCategory.findById(section.menu[categoryIndex])
-        if(category)
-        {
+      for (
+        let categoryIndex = 0;
+        categoryIndex < section.menu.length;
+        categoryIndex++
+      ) {
+        const category = await MenuCategory.findById(
+          section.menu[categoryIndex]
+        );
+        if (category) {
           // deleting all th emenu items
-          for (let itemIndex = 0; itemIndex < category.Items.length; itemIndex++) {
+          for (
+            let itemIndex = 0;
+            itemIndex < category.Items.length;
+            itemIndex++
+          ) {
             await MenuItem.findByIdAndDelete(category.Items[itemIndex]);
           }
         }
         await MenuCategory.findByIdAndDelete(section.menu[categoryIndex]);
       }
       //remove section from table
-      await Section.findByIdAndDelete(req.params.id).then(
-        (deletedSection) => {
-          if (deletedSection) {
-            return res.status(200).json({
-              message: "Section deleted successfully",
-              success: true,
-            });
-          } else {
-            return res.status(404).json({
-              message: "Section deletion failed",
-              success: false,
-            });
-          }
+      await Section.findByIdAndDelete(req.params.id).then((deletedSection) => {
+        if (deletedSection) {
+          return res.status(200).json({
+            message: "Section deleted successfully",
+            success: true,
+          });
+        } else {
+          return res.status(404).json({
+            message: "Section deletion failed",
+            success: false,
+          });
         }
-      );
+      });
     }
   } catch (error) {
     console.error(error);
@@ -1644,23 +1692,30 @@ app.post("/bookDineinSection", async (req, res) => {
   }
 });
 
-app.post("/updateDineinBookingStatus/:id", async (req, res) => {
+app.post("/updateDineinBooking/:id", async (req, res) => {
   try {
     const bookingId = req.params.id;
-    const status = req.body.status;
+    const booking = req.body;
     try {
-      const result = await DineinBookings.updateOne(
+      await updateDineinBookingStatus();
+      const result = await DineinBookings.findOneAndUpdate(
         { _id: bookingId },
-        { $set: { status: status } }
+        { $set: booking },
+        { new: true }
       );
-      // if(result.modifiedCount>0)
-      // {
-      console.log("updated booking status");
-      return res.status(200).json({
-        success: true,
-        message: "Updated booking status in DB successfully",
-      });
-      // }
+      // const result = updateDineinBookingStatus(bookingId,booking)
+      if (result) {
+        console.log("updated booking status");
+        return res.status(200).json({
+          success: true,
+          message: "Updated booking status in DB successfully",
+        });
+      } else {
+        return res.status(501).json({
+          success: false,
+          message: "failed to change the booking status",
+        });
+      }
     } catch (error) {
       return res.status(500).json({
         success: false,
@@ -1675,19 +1730,26 @@ app.post("/updateDineinBookingStatus/:id", async (req, res) => {
   }
 });
 
-app.post("/addUserFavCuisine/:id", async (req, res) => {
+app.post("/addUserFavorites/:id", async (req, res) => {
   try {
     console.log(req.body);
     const userId = req.params.id;
     try {
-      const result = await UserLikings.updateOne(
+      let query={}
+      if(req.body.cuisines)
+        query={$addToSet: { favCuisines: { $each: req.body.cuisines } }}
+      if(req.body.preferences)
+        query={...query,...req.body.preferences}
+      const result = await UserLikings.findOneAndUpdate(
         { userId: userId },
-        { $addToSet: { favCuisines: { $each: req.body.cuisines } } }
+        query,
+        {new:true}
       );
       console.log("added user fav cuisines");
       return res.status(200).json({
         success: true,
         message: "added user favcuisines in DB successfully",
+        userlikings: result
       });
     } catch (error) {
       console.log(error);
@@ -1718,13 +1780,10 @@ app.post("/addReview", async (req, res) => {
     reviewDbEntry
       .save()
       .then(async (addedReview) => {
-        console.log(
-          "Backend: New review",
-          addedReview._id,
-          "added successfully"
-        );
+        console.log( "Backend: New review", addedReview._id, "added successfully" );
         const section = await Section.findById(review.sectionId);
         if (section) {
+          console.log(section.reviews,section.ratings);
           section.rating =
             (section.rating *
               (section.reviews.length + section.ratings.length) +
@@ -1773,6 +1832,7 @@ app.post("/addReview", async (req, res) => {
 
 app.get("/getBookingSummary/:id", async (req, res) => {
   try {
+    await updateDineinBookingStatus();
     const bookingDBEntry = await DineinBookings.findById(req.params.id);
     if (bookingDBEntry) {
       const section = await Section.findById(bookingDBEntry.sectionId);
