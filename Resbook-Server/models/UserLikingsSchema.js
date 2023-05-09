@@ -6,7 +6,16 @@ const userLikingSchema = new mongoose.Schema({
         ref:'User',
         required:true
     },
-    favMenuItems: [{
+    favMenuItems: 
+    // {
+    //     type: [{
+    //       type: mongoose.Schema.Types.ObjectId,
+    //       ref: 'MenuItem'
+    //     }],
+    //     unique: true,
+    //     // required: true
+    //   },
+    [{
         type: mongoose.Schema.Types.ObjectId,
         ref:'MenuItem',
         required:true
