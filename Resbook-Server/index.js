@@ -471,6 +471,31 @@ app.get("/getMenuCategory/:id", async (req, res) => {
   }
 });
 
+app.get("/getMenuItem/:id", async (req, res) => {
+  try {
+    const itemId = req.params.id;
+    const item = await MenuItem.findById(itemId);
+    if (item) {
+      return res.status(201).json({
+        message: "Item Found",
+        success: true,
+        menuItem: item,
+      });
+    } else {
+      return res.status(404).json({
+        message: "Menu Item not found",
+        success: false,
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Error/exception caught in Backend",
+      success: false,
+    });
+  }
+});
+
 app.get("/:id/getWholeSectionMenu", async (req, res) => {
   try {
     // console.log(req.params.id);
@@ -1737,9 +1762,11 @@ app.post("/addUserFavorites/:id", async (req, res) => {
     try {
       let query={}
       if(req.body.cuisines)
-        query={$addToSet: { favCuisines: { $each: req.body.cuisines } }}
+        query={$addToSet: { favCuisines: { $each: req.body.cuisines }}}
       if(req.body.preferences)
         query={...query,...req.body.preferences}
+      if(req.body.justCuisines)
+        query={favCuisines:req.body.justCuisines}
       const result = await UserLikings.findOneAndUpdate(
         { userId: userId },
         query,
