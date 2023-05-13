@@ -37,7 +37,9 @@ cloudinary.config({
 });
 
 const port = process.env.REACT_APP_PORT;
-app.use(cors());
+app.use(cors({
+  origin: 'https://resbook.netlify.app'
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
