@@ -39,7 +39,11 @@ cloudinary.config({
 const port = process.env.REACT_APP_PORT;
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+const corsOptions = {
+  origin: ['https://resbook.netlify.app','http://localhost:3000'],
+};
 
+app.use(cors(corsOptions));
 app.get("/", (req, res) => {
 
   res.send("<h1>Hi, namaste</h1>");
@@ -1480,6 +1484,7 @@ app.post("/login", async (req, res) => {
     const userLogin = await User.findOne({ email: email });
     if (userLogin) {
       bcrypt.compare(password, userLogin.password, function (err, result) {
+        res.set('Access-Control-Allow-Origin', '*');
         if (err) {
           console.error(err);
           return res.json({
