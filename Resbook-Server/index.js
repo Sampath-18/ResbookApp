@@ -1480,6 +1480,7 @@ app.post("/login", async (req, res) => {
     const userLogin = await User.findOne({ email: email });
     if (userLogin) {
       bcrypt.compare(password, userLogin.password, function (err, result) {
+        res.set('Access-Control-Allow-Origin', '*');
         if (err) {
           console.error(err);
           return res.json({
