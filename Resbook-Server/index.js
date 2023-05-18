@@ -41,7 +41,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.get("/", (req, res) => {
-  res.send("<h1>Hi, namaste test3</h1>");
+
+  res.send("<h1>Hi, namaste</h1>");
+
 });
 
 const updateDineinBookingStatus = async () => {
