@@ -39,7 +39,12 @@ cloudinary.config({
 const port = process.env.REACT_APP_PORT;
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+const corsOptions = {
+  origin: 'https://main--resbook.netlify.app',
 
+};
+
+app.use(cors(corsOptions));
 app.get("/", (req, res) => {
 
   res.send("<h1>Hi, namaste</h1>");
