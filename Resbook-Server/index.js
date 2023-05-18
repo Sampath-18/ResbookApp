@@ -40,8 +40,7 @@ const port = process.env.REACT_APP_PORT;
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 const corsOptions = {
-  origin: 'https://main--resbook.netlify.app',
-
+  origin: ['https://main--resbook.netlify.app','http://localhost:3000'],
 };
 
 app.use(cors(corsOptions));
