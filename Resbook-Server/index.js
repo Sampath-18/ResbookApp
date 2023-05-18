@@ -37,12 +37,13 @@ cloudinary.config({
 });
 
 const port = process.env.REACT_APP_PORT;
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.get("/", (req, res) => {
-  res.send("<h1>namaste</h1>");
+
+  res.send("<h1>Hi, namaste</h1>");
+
 });
 
 const updateDineinBookingStatus = async () => {
